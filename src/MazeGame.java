@@ -11,3 +11,7 @@ class Bitch {
 class Kevin extends Bitch {
     
 }
+
+interface IListOfAnish {
+    
+}
