@@ -62,7 +62,7 @@ class Cell {
     
     Color getColor() {
         // Hue 282
-        return new Color(241, 208, 255);
+        return new Color(203, 188, 227);
     }
     
 }
@@ -85,7 +85,7 @@ abstract class Edge {
     
     Color getColor() {
         // Hue 282
-        return new Color(127, 102, 137);
+        return new Color(73, 46, 116);
     }
 }
 
