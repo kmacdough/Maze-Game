@@ -61,7 +61,8 @@ class Cell {
     }
     
     Color getColor() {
-        return Color.BLUE;
+        // Hue 282
+        return new Color(241, 208, 255);
     }
     
 }
@@ -83,7 +84,8 @@ abstract class Edge {
     abstract WorldImage draw(int cellSize);
     
     Color getColor() {
-        return Color.BLACK;
+        // Hue 282
+        return new Color(127, 102, 137);
     }
 }
 
@@ -292,7 +294,7 @@ class MazeWorld extends World {
 
 class ExamplesMaze {
     void testBigBang(Tester t) {
-        MazeWorld initWorld = new MazeWorld(600, 300, 3);
+        MazeWorld initWorld = new MazeWorld(20, 20, 20);
         
         initWorld.bigBang(initWorld.getPixelWidth(),
                           initWorld.getPixelHeight(),
