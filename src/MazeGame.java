@@ -195,9 +195,6 @@ class Maze {
 		this.height = height;
 		this.constructCells(width, height);
 		this.connectCells();
-
-		this.assignRandomWeights();
-		this.generateMazeFast();
 	}
 
 	// EFFECT: modify cells as a matrix of cells that aren't connected
@@ -271,9 +268,11 @@ class Maze {
 		WorldImage mazeImage =
 				this.drawSection(cellSize, 0, 0, 
 						this.cells.size(), this.cells.get(0).size());
+		
 		// width and height of maze in pixels
 		int pWidth = this.width * cellSize;
 		int pHeight = this.height * cellSize;
+		
 		WorldImage border = new FrameImage(new Posn(pWidth / 2, pHeight/2),
 				pWidth, pHeight, Color.white);
 		return mazeImage.overlayImages(border);
@@ -327,8 +326,7 @@ class Maze {
 	// EFFECT: modifies isBlocking fields of edges to generate a maze using
 	//   Kruskal's algorithm immediately
 	void generateMazeFast() {
-		UnionFindPosn uFind =
-				new UnionFindPosn(this.cells.size(), this.cells.get(0).size());
+		UnionFindPosn uFind = new UnionFindPosn(width, height);
 		int edgesUsed = 0;
 		int edgesNeeded = this.width * this.height - 1;
 		int currEdge = 1;
@@ -400,18 +398,94 @@ class UnionFindPosn {
 	}
 }
 
+// to animate algorithms on a maze
+abstract class MazeAnimator {
+	Maze maze;
+
+	MazeAnimator(Maze maze) {
+		this.maze = maze;
+	}
+
+	// EFFECT: update animation on tick
+	abstract void onTick();
+
+	// draw an the frame of the animatino onto given background
+	WorldImage drawOnto(int cellSize, WorldImage bg) {
+		return this.maze.drawOnto(cellSize, bg);
+	}
+}
+
+// a blank maze animator that just shows a maze
+class BasicAnimator extends MazeAnimator {
+	BasicAnimator(Maze maze) {
+		super(maze);
+	}
+
+	// EFFECT: update this Animator's fields to progress one step
+	void onTick() {
+		
+	}
+}
+
+// animate Kruskal generation of a maze
+class KruskalAnimator extends MazeAnimator {
+	UnionFindPosn uFind;
+	int edgesUsed;
+	int edgesNeeded;
+	int currEdge;
+
+	KruskalAnimator(Maze maze, int width, int height) {
+		super(maze);
+		uFind = new UnionFindPosn(width, height);
+		edgesUsed = 0;
+		edgesNeeded = width * height - 1;
+		currEdge = 1;
+	}
+
+	// EFFECT: update this Animator's fields to progress one step
+	void onTick() {
+		if (edgesUsed < edgesNeeded) {
+			Edge nextEdge = this.maze.edges.get(currEdge);
+			Posn cell1Posn = new Posn(nextEdge.cell1.x, nextEdge.cell1.y);
+			Posn cell2Posn = new Posn(nextEdge.cell2.x, nextEdge.cell2.y);
+			if (uFind.sameGroup(cell1Posn, cell2Posn)) {
+				// Do nothing
+			}
+			else {
+				nextEdge.isBlocking = false;
+				edgesUsed += 1;
+				uFind.connect(cell1Posn, cell2Posn);
+			}
+			currEdge += 1;
+		}
+	}
+	
+	/*
+	 * 
+		UnionFindPosn uFind =
+				new UnionFindPosn(this.cells.size(), this.cells.get(0).size());
+
+		while (edgesUsed < edgesNeeded) {;
+		}
+	 */
+}
+
+// to represent a world containing a maze
 class MazeWorld extends World {
 
 	int width; // in cells
 	int height; // in cells
 	int cellSize; // in pixels
 	Maze maze;
+	// animates certain algorithms on the maze
+	MazeAnimator animator;
 
 	MazeWorld(int width, int height, int cellSize) {
 		this.width = width;
 		this.height = height;
 		this.cellSize = cellSize;
 		this.maze = new Maze(width, height);
+		this.animator = new BasicAnimator(maze);
 	}
 
 	public WorldImage makeImage() {
@@ -421,33 +495,52 @@ class MazeWorld extends World {
 				new Posn(pWidth / 2, pHeight / 2),
 				pWidth, pHeight, Color.GRAY);
 
-		return this.maze.drawOnto(this.cellSize, bg);
+		return this.animator.drawOnto(this.cellSize, bg);
+	}
+	
+	// update the world on each tick
+	public void onTick() {
+		this.animator.onTick();
+	}
+
+	// handle user key presses
+	public void onKeyEvent(String ke) {
+		// generate random maze
+		if (ke.equals("r")) {
+			this.maze.assignRandomWeights();
+			this.animator =
+					new KruskalAnimator(this.maze, this.width, this.height);
+		}
+		// reset maze with backspace
+		else if (ke.equals("\b")) {
+			this.maze = new Maze(width, height);
+			this.animator = new BasicAnimator(maze);
+		}
+		else {
+			System.out.println(ke);
+		}
 	}
 
 	// return the width of the maze in pixels 
-			int getPixelWidth() {
+	int getPixelWidth() {
 		return this.width * this.cellSize;
-			}
+	}
 
-			// return the height of the maze in pixels 
-			int getPixelHeight() {
-				return this.height * this.cellSize;
-			}
-
-			// handle user key presses
-			void onKeyEvent() {
-
-			}
+	// return the height of the maze in pixels 
+	int getPixelHeight() {
+		return this.height * this.cellSize;
+	}
 }
 
+// tests and examples for mazes
 class ExamplesMaze {
 
 	// test to start off big bang
 	void testBigBang(Tester t) {
-		MazeWorld initWorld = new MazeWorld(100, 60, 10);
+		MazeWorld initWorld = new MazeWorld(20, 20, 20);
 
 		initWorld.bigBang(initWorld.getPixelWidth(),
 				initWorld.getPixelHeight(),
-				0.1);
+				0.01);
 	}
 }
