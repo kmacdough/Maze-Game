@@ -323,30 +323,30 @@ class Maze {
 		edges.sort(new EdgeWeightComp());
 	}
 
-	// EFFECT: modifies isBlocking fields of edges to generate a maze using
-	//   Kruskal's algorithm immediately
-	void generateMazeFast() {
-		UnionFindPosn uFind = new UnionFindPosn(width, height);
-		int edgesUsed = 0;
-		int edgesNeeded = this.width * this.height - 1;
-		int currEdge = 1;
-
-		while (edgesUsed < edgesNeeded) {
-			Edge nextEdge = this.edges.get(currEdge);
-			Posn cell1Posn = new Posn(nextEdge.cell1.x, nextEdge.cell1.y);
-			Posn cell2Posn = new Posn(nextEdge.cell2.x, nextEdge.cell2.y);
-			if (uFind.sameGroup(cell1Posn, cell2Posn)) {
-				// Do nothing
-			}
-			else {
-				nextEdge.isBlocking = false;
-				edgesUsed += 1;
-				uFind.connect(cell1Posn, cell2Posn);
-			}
-			currEdge += 1;
-		}
-
-	}
+//	// EFFECT: modifies isBlocking fields of edges to generate a maze using
+//	//   Kruskal's algorithm immediately
+//	void generateMazeFast() {
+//		UnionFindPosn uFind = new UnionFindPosn(width, height);
+//		int edgesUsed = 0;
+//		int edgesNeeded = this.width * this.height - 1;
+//		int currEdge = 1;
+//
+//		while (edgesUsed < edgesNeeded) {
+//			Edge nextEdge = this.edges.get(currEdge);
+//			Posn cell1Posn = new Posn(nextEdge.cell1.x, nextEdge.cell1.y);
+//			Posn cell2Posn = new Posn(nextEdge.cell2.x, nextEdge.cell2.y);
+//			if (uFind.sameGroup(cell1Posn, cell2Posn)) {
+//				// Do nothing
+//			}
+//			else {
+//				nextEdge.isBlocking = false;
+//				edgesUsed += 1;
+//				uFind.connect(cell1Posn, cell2Posn);
+//			}
+//			currEdge += 1;
+//		}
+//
+//	}
 }
 
 // a union-find structure for creating groups of Posns among a rectangular,
@@ -409,21 +409,41 @@ abstract class MazeAnimator {
 	// EFFECT: update animation on tick
 	abstract void onTick();
 
-	// draw an the frame of the animatino onto given background
+	// draw an the frame of the animation onto given background
 	WorldImage drawOnto(int cellSize, WorldImage bg) {
-		return this.maze.drawOnto(cellSize, bg);
+		WorldImage mazeImg = this.maze.drawOnto(cellSize, bg);
+		// bottom middle of screen
+		Posn textLoc = new Posn(bg.getWidth() / 2, bg.getHeight() - 7);
+		return mazeImg.overlayImages(
+				new TextImage(textLoc, this.getText(), 15, Color.BLACK));
 	}
+	
+	// get the status text of this animation
+	abstract String getText();
+
+	// is this animation complete?
+	abstract boolean isComplete();
 }
 
 // a blank maze animator that just shows a maze
-class BasicAnimator extends MazeAnimator {
-	BasicAnimator(Maze maze) {
+class IdleAnimator extends MazeAnimator {
+	IdleAnimator(Maze maze) {
 		super(maze);
 	}
 
 	// EFFECT: update this Animator's fields to progress one step
 	void onTick() {
 		
+	}
+
+	// is this animation complete?
+	boolean isComplete() {
+		return true;
+	}
+
+	// get the status text of this animation
+	String getText() {
+		return "Idle";
 	}
 }
 
@@ -439,35 +459,68 @@ class KruskalAnimator extends MazeAnimator {
 		uFind = new UnionFindPosn(width, height);
 		edgesUsed = 0;
 		edgesNeeded = width * height - 1;
-		currEdge = 1;
+		currEdge = 0;
 	}
 
 	// EFFECT: update this Animator's fields to progress one step
 	void onTick() {
-		if (edgesUsed < edgesNeeded) {
+		if (!this.isComplete()) {
 			Edge nextEdge = this.maze.edges.get(currEdge);
 			Posn cell1Posn = new Posn(nextEdge.cell1.x, nextEdge.cell1.y);
 			Posn cell2Posn = new Posn(nextEdge.cell2.x, nextEdge.cell2.y);
-			if (uFind.sameGroup(cell1Posn, cell2Posn)) {
-				// Do nothing
-			}
-			else {
-				nextEdge.isBlocking = false;
-				edgesUsed += 1;
-				uFind.connect(cell1Posn, cell2Posn);
-			}
 			currEdge += 1;
+			
+			// try to find a working edge each tick
+			while (uFind.sameGroup(cell1Posn, cell2Posn)) {
+				nextEdge = this.maze.edges.get(currEdge);
+				cell1Posn = new Posn(nextEdge.cell1.x, nextEdge.cell1.y);
+				cell2Posn = new Posn(nextEdge.cell2.x, nextEdge.cell2.y);
+				currEdge += 1;
+			}
+			nextEdge.isBlocking = false;
+			edgesUsed += 1;
+			uFind.connect(cell1Posn, cell2Posn);
 		}
 	}
-	
-	/*
-	 * 
-		UnionFindPosn uFind =
-				new UnionFindPosn(this.cells.size(), this.cells.get(0).size());
 
-		while (edgesUsed < edgesNeeded) {;
+	// is this animation complete?
+	boolean isComplete() {
+		return edgesUsed >= edgesNeeded;
+	}
+
+	// get the status text of this animation
+	String getText() {
+		return "Generating maze: " + this.edgesUsed + "/" + this.edgesNeeded;
+	}
+}
+
+// to instantly complete any other animator
+class InstantAnimator extends MazeAnimator {
+	MazeAnimator anim;
+	
+	InstantAnimator(Maze maze, MazeAnimator anim) {
+		super(maze);
+		this.anim = anim;
+	}
+
+	// instantly complete animation
+	void onTick() {
+		while(!this.anim.isComplete()) {
+			this.anim.onTick();
 		}
-	 */
+	}
+
+	// get status for this animator
+	String getText() {
+		return "Completing Animation";
+	}
+
+	// is this animation complete?
+	boolean isComplete() {
+		return this.anim.isComplete();
+	}
+	
+	
 }
 
 // to represent a world containing a maze
@@ -485,12 +538,12 @@ class MazeWorld extends World {
 		this.height = height;
 		this.cellSize = cellSize;
 		this.maze = new Maze(width, height);
-		this.animator = new BasicAnimator(maze);
+		this.animator = new IdleAnimator(maze);
 	}
 
 	public WorldImage makeImage() {
 		int pWidth = this.getPixelWidth();
-		int pHeight = this.getPixelWidth();
+		int pHeight = this.getPixelHeight();
 		WorldImage bg = new RectangleImage(
 				new Posn(pWidth / 2, pHeight / 2),
 				pWidth, pHeight, Color.GRAY);
@@ -500,6 +553,9 @@ class MazeWorld extends World {
 	
 	// update the world on each tick
 	public void onTick() {
+		if (this.animator.isComplete()) {
+			this.animator = new IdleAnimator(maze);
+		}
 		this.animator.onTick();
 	}
 
@@ -513,8 +569,12 @@ class MazeWorld extends World {
 		}
 		// reset maze with backspace
 		else if (ke.equals("\b")) {
-			this.maze = new Maze(width, height);
-			this.animator = new BasicAnimator(maze);
+			this.maze = new Maze(this.width, this.height);
+			this.animator = new IdleAnimator(this.maze);
+		}
+		// complete animation
+		else if (ke.equals("\n")) {
+			this.animator = new InstantAnimator(this.maze, this.animator);
 		}
 		else {
 			System.out.println(ke);
@@ -528,7 +588,7 @@ class MazeWorld extends World {
 
 	// return the height of the maze in pixels 
 	int getPixelHeight() {
-		return this.height * this.cellSize;
+		return this.height * this.cellSize + 20;
 	}
 }
 
@@ -541,6 +601,6 @@ class ExamplesMaze {
 
 		initWorld.bigBang(initWorld.getPixelWidth(),
 				initWorld.getPixelHeight(),
-				0.01);
+				0.1);
 	}
 }
