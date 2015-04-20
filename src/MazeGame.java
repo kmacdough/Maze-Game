@@ -75,6 +75,8 @@ class Cell {
 
 // to represent a wall between two cells
 abstract class Edge {
+	static final Color COLOR = new Color(73, 46, 116);
+	
 	Cell cell1;
 	Cell cell2;
 	boolean isBlocking;
@@ -101,7 +103,7 @@ abstract class Edge {
 
 	Color getColor() {
 		// Hue 282
-		return new Color(73, 46, 116);
+		return Edge.COLOR;
 	}
 }
 
@@ -267,14 +269,34 @@ class Maze {
 
 		WorldImage mazeImage =
 				this.drawSection(cellSize, 0, 0, 
-						this.cells.size(), this.cells.get(0).size());
+						this.width, this.height);
 		
 		// width and height of maze in pixels
 		int pWidth = this.width * cellSize;
 		int pHeight = this.height * cellSize;
 		
-		WorldImage border = new FrameImage(new Posn(pWidth / 2, pHeight/2),
-				pWidth, pHeight, Color.white);
+		///////////////////////////////////////////////////////////////////////
+		// Draw Border
+		
+		// positions of the centers of the sides
+		Posn topC = new Posn(pWidth / 2, 0);
+		Posn botC = new Posn(pWidth / 2, pHeight);
+		Posn leftC = new Posn(0, pHeight / 2);
+		Posn rightC = new Posn(pWidth, pHeight / 2);
+		
+		int borderW = cellSize / 10 + 1;
+
+		WorldImage top =
+				new RectangleImage(topC, pWidth, borderW, Edge.COLOR);
+		WorldImage bot =
+				new RectangleImage(botC, pWidth, borderW, Edge.COLOR);
+		WorldImage left =
+				new RectangleImage(leftC, borderW, pWidth, Edge.COLOR);
+		WorldImage right =
+				new RectangleImage(rightC, borderW, pWidth, Edge.COLOR);
+		
+		WorldImage border = top.overlayImages(bot, left, right);
+		
 		return mazeImage.overlayImages(border);
 	}
 
@@ -315,6 +337,13 @@ class Maze {
 	///////////////////////////////////////////////////////////////////////////
 	// Maze creation functions
 
+	// put all walls in maze back up
+	void wallsUp() {
+		for (Edge edge: edges) {
+			edge.isBlocking = true;
+		}
+	}
+	
 	// EFFECT: modifies the weights of the edges to give them random weights
 	void assignRandomWeights() {
 		for (Edge edge: edges) {
@@ -415,11 +444,11 @@ abstract class MazeAnimator {
 		// bottom middle of screen
 		Posn textLoc = new Posn(bg.getWidth() / 2, bg.getHeight() - 7);
 		return mazeImg.overlayImages(
-				new TextImage(textLoc, this.getText(), 15, Color.BLACK));
+				new TextImage(textLoc, this.status(), 15, Color.BLACK));
 	}
 	
 	// get the status text of this animation
-	abstract String getText();
+	abstract String status();
 
 	// is this animation complete?
 	abstract boolean isComplete();
@@ -442,7 +471,7 @@ class IdleAnimator extends MazeAnimator {
 	}
 
 	// get the status text of this animation
-	String getText() {
+	String status() {
 		return "Idle";
 	}
 }
@@ -456,6 +485,8 @@ class KruskalAnimator extends MazeAnimator {
 
 	KruskalAnimator(Maze maze, int width, int height) {
 		super(maze);
+		this.maze.wallsUp();
+		
 		uFind = new UnionFindPosn(width, height);
 		edgesUsed = 0;
 		edgesNeeded = width * height - 1;
@@ -489,7 +520,7 @@ class KruskalAnimator extends MazeAnimator {
 	}
 
 	// get the status text of this animation
-	String getText() {
+	String status() {
 		return "Generating maze: " + this.edgesUsed + "/" + this.edgesNeeded;
 	}
 }
@@ -511,7 +542,7 @@ class InstantAnimator extends MazeAnimator {
 	}
 
 	// get status for this animator
-	String getText() {
+	String status() {
 		return "Completing Animation";
 	}
 
@@ -561,13 +592,16 @@ class MazeWorld extends World {
 
 	// handle user key presses
 	public void onKeyEvent(String ke) {
-		// generate random maze
+		// assign random weights
 		if (ke.equals("r")) {
 			this.maze.assignRandomWeights();
+		}
+		// generate maze
+		else if (ke.equals("g")) {
 			this.animator =
 					new KruskalAnimator(this.maze, this.width, this.height);
 		}
-		// reset maze with backspace
+		// reset maze
 		else if (ke.equals("\b")) {
 			this.maze = new Maze(this.width, this.height);
 			this.animator = new IdleAnimator(this.maze);
