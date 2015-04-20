@@ -452,6 +452,9 @@ abstract class MazeAnimator {
 
 	// is this animation complete?
 	abstract boolean isComplete();
+	
+	// next animator to use when done
+	abstract MazeAnimator nextAnimator();
 }
 
 // a blank maze animator that just shows a maze
@@ -473,6 +476,11 @@ class IdleAnimator extends MazeAnimator {
 	// get the status text of this animation
 	String status() {
 		return "Idle";
+	}
+
+	// next animator to use when done
+	MazeAnimator nextAnimator() {
+		return this;
 	}
 }
 
@@ -509,8 +517,8 @@ class KruskalAnimator extends MazeAnimator {
 				currEdge += 1;
 			}
 			nextEdge.isBlocking = false;
-			edgesUsed += 1;
-			uFind.connect(cell1Posn, cell2Posn);
+			this.edgesUsed += 1;
+			this.uFind.connect(cell1Posn, cell2Posn);
 		}
 	}
 
@@ -522,6 +530,11 @@ class KruskalAnimator extends MazeAnimator {
 	// get the status text of this animation
 	String status() {
 		return "Generating maze: " + this.edgesUsed + "/" + this.edgesNeeded;
+	}
+
+	// next animator to use when done
+	MazeAnimator nextAnimator() {
+		return new IdleAnimator(this.maze);
 	}
 }
 
@@ -550,8 +563,11 @@ class InstantAnimator extends MazeAnimator {
 	boolean isComplete() {
 		return this.anim.isComplete();
 	}
-	
-	
+
+	// next animator to use when done
+	MazeAnimator nextAnimator() {
+		return this.anim.nextAnimator();
+	}
 }
 
 // to represent a world containing a maze
@@ -585,7 +601,7 @@ class MazeWorld extends World {
 	// update the world on each tick
 	public void onTick() {
 		if (this.animator.isComplete()) {
-			this.animator = new IdleAnimator(maze);
+			this.animator = animator.nextAnimator();
 		}
 		this.animator.onTick();
 	}
