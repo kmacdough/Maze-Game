@@ -447,6 +447,11 @@ abstract class MazeAnimator {
 				new TextImage(textLoc, this.status(), 15, Color.BLACK));
 	}
 	
+	// react to keystrokes from user
+	void onKeyEvent(String ke) {
+		
+	}
+	
 	// get the status text of this animation
 	abstract String status();
 
@@ -629,6 +634,8 @@ class MazeWorld extends World {
 		else {
 			System.out.println(ke);
 		}
+		
+		animator.onKeyEvent(ke);
 	}
 
 	// return the width of the maze in pixels 
