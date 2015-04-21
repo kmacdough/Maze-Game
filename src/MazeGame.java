@@ -1,6 +1,7 @@
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.Stack;
@@ -29,15 +30,19 @@ class Cell {
     Edge right;
     Edge bot;
     boolean traversed;
+    boolean onPath; // is this cell on the direct path to the exit?
 
     // Default constructor
-    Cell(int x, int y, Edge left, Edge top, Edge right, Edge bot, boolean traversed) {
+    Cell(int x, int y, Edge left, Edge top, Edge right, Edge bot, 
+            boolean traversed, boolean onPath) {
         this.x = x;
         this.y = y;
         this.left = left;
         this.top = top;
         this.right = right;
         this.bot = bot;
+        this.traversed = traversed;
+        this.onPath = onPath;
     }
 
     // Initializing constructor
@@ -71,14 +76,22 @@ class Cell {
     }
 
     Color getColor() {
-        if (this.traversed) {
+        if (this.onPath) {
+            return new Color(250, 70, 70);
+        }
+        else if (this.traversed) {
             return new Color(150, 150, 220);	        
-        } else {
+        } 
+        else {
             // Hue 282
             return new Color(203, 188, 227);
         }
     }
-
+    
+    // Returns the name of this cell as a string of its position
+    String getName() {
+        return Integer.toString(this.x).concat(Integer.toString(this.y));
+    }
 }
 
 // to represent a wall between two cells
@@ -372,10 +385,12 @@ class Maze {
     }
 
     // Resets every cell in this maze to be not marked as traversed
+    // or on path
     void resetTraversals() {
         for (ArrayList<Cell> col: cells) {
             for (Cell cell: col) {
                 cell.traversed = false;
+                cell.onPath = false;
             }
         }
     }
@@ -492,12 +507,15 @@ abstract class MazeAnimator {
 
 // animate a depth-first search of a maze
 class DFSAnimator extends MazeAnimator {
+    // Note: cameFromCell connects each cell to its previous cell
+    HashMap<Cell, Cell> cameFromCell;
+    
     Stack<Cell> worklist;
     boolean completed;
 
     DFSAnimator(Maze maze) {
         super(maze);
-        this.maze.resetTraversals();
+        cameFromCell = new HashMap<Cell, Cell>();
         this.worklist = new Stack<Cell>();
         this.worklist.push(this.maze.getFirstCell());
         this.completed = false;
@@ -513,27 +531,62 @@ class DFSAnimator extends MazeAnimator {
             }
             else if (next == this.maze.getFinalCell()) {
                 System.out.println("Game is won");
+                // TODO: Get reconstruct working
+//                this.reconstruct(next);
                 this.completed = true;
             }
             else {
                 if (!next.left.isBlocking) {
-                    this.worklist.push(next.left.cell1);
+                    Cell left = next.left.cell1;
+                    this.worklist.push(left);
+                    this.cameFromCell.put(left, next);
                 }
                 if (!next.top.isBlocking) {
-                    this.worklist.push(next.top.cell1);
+                    Cell top = next.top.cell1;
+                    this.worklist.push(top);
+                    this.cameFromCell.put(top, next);
                 }
                 if (!next.right.isBlocking) {
-                    this.worklist.push(next.right.cell2);
+                    Cell right = next.right.cell2;
+                    this.worklist.push(right);
+                    this.cameFromCell.put(right, next);
                 }
                 if (!next.bot.isBlocking) {
-                    this.worklist.push(next.bot.cell2);
+                    Cell bot = next.bot.cell2;
+                    this.worklist.push(bot);
+                    this.cameFromCell.put(bot, next);
                 }
             }
-
             next.traversed = true;
         } 
         else {
             this.completed = true;
+        }
+    }
+    
+    // find direct path from end to start and mark all cells in path
+    // as being on the path
+    void reconstruct(Cell cell) {
+        Cell curCell = cell;
+        Cell prevCell = this.cameFromCell.get(curCell);
+        while (curCell != this.maze.getFirstCell() && !curCell.onPath) {
+            curCell.onPath = true;
+            
+            curCell = prevCell;
+            
+            prevCell = this.cameFromCell.get(prevCell);
+            this.cameFromCell.remove(curCell);
+            
+//            if (curCell == prevEdge.cell1.getName()) {
+//                curCell = prevEdge.cell2.getName();
+//            }
+//            else if (curCell == prevEdge.cell2.getName()) {
+//                curCell = prevEdge.cell1.getName();
+//            }
+            
+            
+//            prevEdge = this.cameFromEdge.get(curCell);
+            System.out.println(curCell);
         }
     }
 
@@ -565,7 +618,6 @@ class BFSAnimator extends MazeAnimator {
 
     BFSAnimator(Maze maze) {
         super(maze);
-        this.maze.resetTraversals();
         this.worklist = new LinkedList<Cell>();
         this.worklist.add(this.maze.getFirstCell());
         this.completed = false;
@@ -621,6 +673,83 @@ class BFSAnimator extends MazeAnimator {
         return this;
     }
 }
+
+// User-controlled animator for maze traversal
+class PlayAnimator extends MazeAnimator {
+    Cell head;
+    
+    PlayAnimator(Maze maze) {
+        super(maze);
+        this.head = maze.getFirstCell();
+        head.traversed = true;
+    }
+
+    // EFFECT: update this Animator's fields to progress one step
+    void onTick() {
+        
+    }
+    
+    void onKeyEvent(String ke) {
+        if (!this.isComplete()) {
+            if (ke == "left" && !this.head.left.isBlocking) {
+                this.head.onPath = false;
+                this.head = this.head.left.cell1;
+                this.head.traversed = true;
+                this.head.onPath = true;
+            }
+            if (ke == "up" && !this.head.top.isBlocking) {
+                this.head.onPath = false;
+                this.head = this.head.top.cell1;
+                this.head.traversed = true;
+                this.head.onPath = true;
+            }
+            if (ke == "right" && !this.head.right.isBlocking) {
+                this.head.onPath = false;
+                this.head = this.head.right.cell2;
+                this.head.traversed = true;
+                this.head.onPath = true;
+            }
+            if (ke == "down" && !this.head.bot.isBlocking) {
+                this.head.onPath = false;
+                this.head = this.head.bot.cell2;
+                this.head.traversed = true;
+                this.head.onPath = true;
+            }
+        }
+    }
+
+    // draw an the frame of the animation onto given background
+    WorldImage drawOnto(int cellSize, WorldImage bg) {
+        WorldImage mazeImg = this.maze.drawOnto(cellSize, bg);
+        // bottom middle of screen
+        Posn textLoc = new Posn(bg.getWidth() / 2, bg.getHeight() - 7);
+        
+        if (this.isComplete()) {
+            Posn winTextLoc = new Posn(bg.getWidth() / 2, bg.getHeight() / 2);
+            mazeImg = mazeImg.overlayImages(
+                    new TextImage(winTextLoc, "YOU WIN", 30, Color.GREEN));
+        }
+        
+        return mazeImg.overlayImages(
+                new TextImage(textLoc, this.status(), 15, Color.BLACK));
+    }
+    
+    // is this animation complete?
+    boolean isComplete() {
+        return this.head == this.maze.getFinalCell();
+    }
+
+    // get the status text of this animation
+    String status() {
+        return "Idle";
+    }
+
+    // next animator to use when done
+    MazeAnimator nextAnimator() {
+        return this;
+    }
+}
+
 
 // a blank maze animator that just shows a maze
 class IdleAnimator extends MazeAnimator {
@@ -779,17 +908,25 @@ class MazeWorld extends World {
         }
         // generate maze
         else if (ke.equals("g")) {
+            this.maze.resetTraversals();
             this.animator =
                     new KruskalAnimator(this.maze, this.width, this.height);
         }     
         // begin depth-first search
         else if (ke.equals("d")) {
+            this.maze.resetTraversals();
             this.animator = new DFSAnimator(this.maze);
         }
         // begin breadth-first search
         else if (ke.equals("b")) {
+            this.maze.resetTraversals();
             this.animator = new BFSAnimator(this.maze);
-        }
+        }        
+        // play maze
+        else if (ke.equals("p")) {
+            this.maze.resetTraversals();
+            this.animator = new PlayAnimator(this.maze);
+        }     
         // reset maze
         else if (ke.equals("\b")) {
             this.maze = new Maze(this.width, this.height);
