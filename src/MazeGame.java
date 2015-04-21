@@ -394,31 +394,6 @@ class Maze {
             }
         }
     }
-
-    //	// EFFECT: modifies isBlocking fields of edges to generate a maze using
-    //	//   Kruskal's algorithm immediately
-    //	void generateMazeFast() {
-    //		UnionFindPosn uFind = new UnionFindPosn(width, height);
-    //		int edgesUsed = 0;
-    //		int edgesNeeded = this.width * this.height - 1;
-    //		int currEdge = 1;
-    //
-    //		while (edgesUsed < edgesNeeded) {
-    //			Edge nextEdge = this.edges.get(currEdge);
-    //			Posn cell1Posn = new Posn(nextEdge.cell1.x, nextEdge.cell1.y);
-    //			Posn cell2Posn = new Posn(nextEdge.cell2.x, nextEdge.cell2.y);
-    //			if (uFind.sameGroup(cell1Posn, cell2Posn)) {
-    //				// Do nothing
-    //			}
-    //			else {
-    //				nextEdge.isBlocking = false;
-    //				edgesUsed += 1;
-    //				uFind.connect(cell1Posn, cell2Posn);
-    //			}
-    //			currEdge += 1;
-    //		}
-    //
-    //	}
 }
 
 // a union-find structure for creating groups of Posns among a rectangular,
@@ -610,31 +585,10 @@ class DFSAnimator extends AutoSolveAnimator {
         this.worklist = new Stack<Cell>();
         this.worklist.push(this.maze.getFirstCell());
     }
-    
-//    // draw an the frame of the animation onto given background
-//    WorldImage drawOnto(int cellSize, WorldImage bg) {
-//    	WorldImage mazeImg = super.drawOnto(cellSize, bg);
-//        
-//        if (this.isComplete()) {
-//            Posn winTextLoc = new Posn(bg.getWidth() / 2, bg.getHeight() / 2);
-//            mazeImg = mazeImg.overlayImages(
-//                new TextImage(winTextLoc, "Search Complete", 30, Color.GREEN));
-//        }
-//        
-//        Posn winTextLoc = new Posn(bg.getWidth() / 2, 20);
-//        mazeImg = mazeImg.overlayImages(
-//            new TextImage(winTextLoc, "Moves:" + this.moves, 20, Color.BLACK));
-//        
-//        return mazeImg;
-//    }
 
     // get the status text of this animation
     String status() {
-//        if (this.isComplete()) {
-//            return "Completed Depth First Search";
-//        } else {
-            return "Depth First Searching.   Moves: " + this.moves;
-//        }
+    	return "Depth First Searching.   Moves: " + this.moves;
     }
 
     // next animator to use when done
@@ -669,23 +623,6 @@ class BFSAnimator extends AutoSolveAnimator {
         this.worklist = new LinkedList<Cell>();
         this.worklist.add(this.maze.getFirstCell());
     }
-
-    // draw an the frame of the animation onto given background
-//    WorldImage drawOnto(int cellSize, WorldImage bg) {
-//        WorldImage mazeImg = super.drawOnto(cellSize, bg);
-//        
-//        if (this.isComplete()) {
-//            Posn winTextLoc = new Posn(bg.getWidth() / 2, bg.getHeight() / 2);
-//            mazeImg = mazeImg.overlayImages(
-//                new TextImage(winTextLoc, "Search Complete", 30, Color.GREEN));
-//        }
-//        
-//        Posn winTextLoc = new Posn(bg.getWidth() / 2, 20);
-//        mazeImg = mazeImg.overlayImages(
-//            new TextImage(winTextLoc, "Moves:" + this.moves, 20, Color.BLACK));
-//        
-//        return mazeImg;
-//    }
     
     // is this animation complete?
     boolean isComplete() {
@@ -694,11 +631,7 @@ class BFSAnimator extends AutoSolveAnimator {
 
     // get the status text of this animation
     String status() {
-//        if (this.isComplete()) {
-//            return "Completed Breadth First Search";
-//        } else {
     	return "Breadth First Searching.   Moves: " + this.moves;
-//        }
     }
 
     // next animator to use when done
@@ -764,23 +697,6 @@ class PlayAnimator extends SolveAnimator {
             }
         }
     }
-
-//    // draw an the frame of the animation onto given background
-//    WorldImage drawOnto(int cellSize, WorldImage bg) {
-//        WorldImage mazeImg = super.drawOnto(cellSize, bg);
-//        
-//        if (this.isComplete()) {
-//            Posn winTextLoc = new Posn(bg.getWidth() / 2, bg.getHeight() / 2);
-//            mazeImg = mazeImg.overlayImages(
-//                    new TextImage(winTextLoc, "YOU WIN", 30, Color.GREEN));
-//        }
-//        
-//        Posn winTextLoc = new Posn(bg.getWidth() / 2, 20);
-//        mazeImg = mazeImg.overlayImages(
-//            new TextImage(winTextLoc, "Moves:" + this.moves, 20, Color.BLACK));
-//        
-//        return mazeImg;
-//    }
     
     // is this animation complete?
     boolean isComplete() {
