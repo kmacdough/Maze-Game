@@ -505,76 +505,113 @@ abstract class MazeAnimator {
     abstract MazeAnimator nextAnimator();
 }
 
-// animate a depth-first search of a maze
-class DFSAnimator extends MazeAnimator {
+// to represent animators for solving the maze
+abstract class SolveAnimator extends MazeAnimator {
     // Note: cameFromCell connects each cell to its previous cell
     HashMap<Cell, Cell> cameFromCell;
-    
-    Stack<Cell> worklist;
     boolean completed;
-    int moves;
+	int moves;
 
-    DFSAnimator(Maze maze) {
-        super(maze);
-        cameFromCell = new HashMap<Cell, Cell>();
-        this.worklist = new Stack<Cell>();
-        this.worklist.push(this.maze.getFirstCell());
-        this.completed = false;
-        this.moves = 0;
-    }
-
-    // EFFECT: update this Animator's fields to progress one step
-    void onTick() {
-    	if (this.worklist.empty()) {
-    		this.completed = true;
-    	}
-    	else if (!this.isComplete()) {
-        	Cell next = worklist.pop();
-
-            while (next.traversed) {
-            	if (this.worklist.isEmpty()) {
-            		return;
-            	}
-            	else {
-            		next = worklist.pop(); 
-            	}
-            }
-            
-            if (next == this.maze.getFinalCell()) {
-                // TODO: Get reconstruct working
-                this.reconstruct(next);
-                this.completed = true;
-            }
-            else {
-                if (!next.left.isBlocking) {
-                    this.tryAddWork(next.left.cell1, next);
-                }
-                if (!next.top.isBlocking) {
-                    this.tryAddWork(next.top.cell1, next);
-                }
-                if (!next.right.isBlocking) {
-                    this.tryAddWork(next.right.cell2, next);
-                }
-                if (!next.bot.isBlocking) {
-                    this.tryAddWork(next.bot.cell2, next);
-                }
-                this.moves += 1;
-            }
-            next.traversed = true;
-        } 
-        else {
-            this.completed = true;
-        }
-    }
-    
-    void tryAddWork(Cell to, Cell from) {
+	SolveAnimator(Maze maze) {
+		super(maze);
+		this.cameFromCell = new HashMap<Cell, Cell>();
+		completed = false;
+		moves = 0;
+	}
+	
+	// try to make the move between given cells
+	void tryAddMove(Cell to, Cell from) {
     	if (to.traversed) {
     		// do nothing
     	}
     	else {
-    		this.worklist.push(to);
+    		this.addWork(to);
     		this.cameFromCell.put(to, from);
     	}
+	}
+
+    // EFFECT: add given cell to the worklist
+	abstract void addWork(Cell cell);
+
+    // find direct path from end to start and mark all cells in path
+    // as being on the path
+    void reconstruct(Cell cell) {
+        Cell curCell = cell;
+        Cell prevCell = this.cameFromCell.get(curCell);
+        while (curCell != this.maze.getFirstCell()/* && !curCell.onPath*/) {
+            curCell.onPath = true;
+            
+            curCell = prevCell;
+            
+            prevCell = this.cameFromCell.get(prevCell);
+        }
+        curCell.onPath = true;
+    }
+    
+    // is this animation completed?
+    boolean isComplete() {
+    	return this.completed;
+    }
+}
+
+// to represent an automatic solver animation
+abstract class AutoSolveAnimator extends SolveAnimator {
+
+	AutoSolveAnimator(Maze maze) {
+		super(maze);
+	}
+	
+	// EFFECT: changes the maze and fields on this animator to progress
+	//   algorithm
+	void onTick() {
+    	if (!this.hasWork()) {
+    		this.completed = true;
+    	}
+    	else if (!this.isComplete()) {
+        	Cell next = this.getWork();
+            // indicate we've now visited this cell
+            next.traversed = true;
+            
+            if (next == this.maze.getFinalCell()) {
+                this.reconstruct(next);
+                this.completed = true;
+            }
+            // try adding all unblocked neighbor cells
+            else {
+                if (!next.left.isBlocking) {
+                    this.tryAddMove(next.left.cell1, next);
+                }
+                if (!next.top.isBlocking) {
+                    this.tryAddMove(next.top.cell1, next);
+                }
+                if (!next.right.isBlocking) {
+                    this.tryAddMove(next.right.cell2, next);
+                }
+                if (!next.bot.isBlocking) {
+                    this.tryAddMove(next.bot.cell2, next);
+                }
+                this.moves += 1;
+            }
+        }
+		
+	}
+
+	// get next cell to work on
+	abstract Cell getWork();
+
+	// are there more cells to work on?
+	abstract boolean hasWork();
+}
+
+// animate a depth-first search of a maze
+class DFSAnimator extends AutoSolveAnimator {
+    
+    Stack<Cell> worklist;
+
+    DFSAnimator(Maze maze) {
+        super(maze);
+        this.worklist = new Stack<Cell>();
+        this.worklist.push(this.maze.getFirstCell());
     }
     
 //    // draw an the frame of the animation onto given background
@@ -593,25 +630,6 @@ class DFSAnimator extends MazeAnimator {
 //        
 //        return mazeImg;
 //    }
-    
-    // find direct path from end to start and mark all cells in path
-    // as being on the path
-    void reconstruct(Cell cell) {
-        Cell curCell = cell;
-        Cell prevCell = this.cameFromCell.get(curCell);
-        while (curCell != this.maze.getFirstCell()/* && !curCell.onPath*/) {
-            curCell.onPath = true;
-            
-            curCell = prevCell;
-            
-            prevCell = this.cameFromCell.get(prevCell);
-        }
-    }
-
-    // is this animation complete?
-    boolean isComplete() {
-        return this.completed;
-    }
 
     // get the status text of this animation
     String status() {
@@ -627,61 +645,32 @@ class DFSAnimator extends MazeAnimator {
         return new MsgAnimator(this.maze,
         		"Comleted Depth First Search.   Moves: " + this.moves);
     }
+
+    // EFFECT: add given cell to the worklist
+	void addWork(Cell cell) {
+		this.worklist.push(cell);
+	}
+
+	// get next cell to work on
+	Cell getWork() {
+		return this.worklist.pop();
+	}
+
+	// are there more cells to work on?
+	boolean hasWork() {
+		return !this.worklist.empty();
+	}
 }
 
 //animate a breadth-first search of a maze
-class BFSAnimator extends MazeAnimator {
+class BFSAnimator extends AutoSolveAnimator {
     // TODO: Make our own implementation of queue
     LinkedList<Cell> worklist;
-    boolean completed;
-    int moves;
 
     BFSAnimator(Maze maze) {
         super(maze);
         this.worklist = new LinkedList<Cell>();
         this.worklist.add(this.maze.getFirstCell());
-        this.completed = false;
-        this.moves = 0;
-    }
-
-    // EFFECT: update this Animator's fields to progress one step
-    void onTick() {
-    	if (this.worklist.isEmpty()) {
-    		this.completed = true;
-    	}
-        if (!this.isComplete()) {
-            Cell next = worklist.remove();
-
-            while (next.traversed) {
-            	if (this.worklist.isEmpty()) {
-            		return;
-            	}
-            	else {
-            		next = worklist.remove(); 
-            	}
-            }
-            
-            if (next == this.maze.getFinalCell()) {
-                this.completed = true;
-            }
-            else {
-                if (!next.left.isBlocking) {
-                    this.worklist.add(next.left.cell1);
-                }
-                if (!next.top.isBlocking) {
-                    this.worklist.add(next.top.cell1);
-                }
-                if (!next.right.isBlocking) {
-                    this.worklist.add(next.right.cell2);
-                }
-                if (!next.bot.isBlocking) {
-                    this.worklist.add(next.bot.cell2);
-                }
-                this.moves += 1;
-            }
-
-            next.traversed = true;
-        }
     }
 
     // draw an the frame of the animation onto given background
@@ -720,15 +709,33 @@ class BFSAnimator extends MazeAnimator {
         return new MsgAnimator(this.maze,
         		"Completed Breadth First Search.   Moves: " + this.moves);
     }
+
+	// add given cell to the worklist
+	void addWork(Cell cell) {
+		this.worklist.add(cell);
+	}
+
+	// get next cell to work on
+	Cell getWork() {
+		return this.worklist.remove();
+	}
+
+	// are there more cells to work on?
+	boolean hasWork() {
+		// TODO Auto-generated method stub
+		return !this.worklist.isEmpty();
+	}
 }
 
 // User-controlled animator for maze traversal
 class PlayAnimator extends MazeAnimator {
+	HashMap<Cell, Cell> cameFromCell;
     Cell head;
     int moves;
     
     PlayAnimator(Maze maze) {
         super(maze);
+        this.cameFromCell = new HashMap<Cell, Cell>();
         this.head = maze.getFirstCell();
         head.traversed = true;
         head.onPath = true;
@@ -737,7 +744,7 @@ class PlayAnimator extends MazeAnimator {
 
     // EFFECT: update this Animator's fields to progress one step
     void onTick() {
-        
+        // do nothing since only operates on keypresses
     }
     
     void onKeyEvent(String ke) {
@@ -975,7 +982,11 @@ class MazeWorld extends World {
     public void onKeyEvent(String ke) {
         // assign random weights
         if (ke.equals("r")) {
-            this.maze.assignRandomWeights();
+        	// only adjust weights if maze is idle
+        	if (this.animator.isComplete()) {
+        		this.maze.assignRandomWeights();
+        		this.animator = new MsgAnimator(this.maze, "Weights Randomized");
+        	}
         }
         // generate maze
         else if (ke.equals("g")) {
@@ -1027,7 +1038,7 @@ class ExamplesMaze {
 
     // test to start off big bang
     void testBigBang(Tester t) {
-        MazeWorld initWorld = new MazeWorld(20, 20, 20);
+        MazeWorld initWorld = new MazeWorld(100, 60, 10);
 
         initWorld.bigBang(initWorld.getPixelWidth(),
                 initWorld.getPixelHeight(),
