@@ -521,10 +521,7 @@ abstract class SolveAnimator extends MazeAnimator {
 	
 	// try to make the move between given cells
 	void tryAddMove(Cell to, Cell from) {
-    	if (to.traversed) {
-    		// do nothing
-    	}
-    	else {
+    	if (!to.traversed) {
     		this.addWork(to);
     		this.cameFromCell.put(to, from);
     	}
@@ -728,18 +725,14 @@ class BFSAnimator extends AutoSolveAnimator {
 }
 
 // User-controlled animator for maze traversal
-class PlayAnimator extends MazeAnimator {
-	HashMap<Cell, Cell> cameFromCell;
+class PlayAnimator extends SolveAnimator {
     Cell head;
-    int moves;
     
     PlayAnimator(Maze maze) {
         super(maze);
-        this.cameFromCell = new HashMap<Cell, Cell>();
         this.head = maze.getFirstCell();
         head.traversed = true;
         head.onPath = true;
-        moves = 0;
     }
 
     // EFFECT: update this Animator's fields to progress one step
@@ -750,32 +743,24 @@ class PlayAnimator extends MazeAnimator {
     void onKeyEvent(String ke) {
         if (!this.isComplete()) {
             if (ke == "left" && !this.head.left.isBlocking) {
-                this.head.onPath = false;
-                this.head = this.head.left.cell1;
-                this.head.traversed = true;
-                this.head.onPath = true;
+            	tryAddMove(this.head.left.cell1, this.head);
                 moves += 1;
             }
             if (ke == "up" && !this.head.top.isBlocking) {
-                this.head.onPath = false;
-                this.head = this.head.top.cell1;
-                this.head.traversed = true;
-                this.head.onPath = true;
+            	tryAddMove(this.head.top.cell1, this.head);
                 moves += 1;
             }
             if (ke == "right" && !this.head.right.isBlocking) {
-                this.head.onPath = false;
-                this.head = this.head.right.cell2;
-                this.head.traversed = true;
-                this.head.onPath = true;
+            	tryAddMove(this.head.right.cell2, this.head);
                 moves += 1;
             }
             if (ke == "down" && !this.head.bot.isBlocking) {
-                this.head.onPath = false;
-                this.head = this.head.bot.cell2;
-                this.head.traversed = true;
-                this.head.onPath = true;
+            	tryAddMove(this.head.bot.cell2, this.head);
                 moves += 1;
+            }
+            if (this.head == this.maze.getFinalCell()) {
+            	this.completed = true;
+            	this.reconstruct(head);
             }
         }
     }
@@ -799,7 +784,7 @@ class PlayAnimator extends MazeAnimator {
     
     // is this animation complete?
     boolean isComplete() {
-        return this.head == this.maze.getFinalCell();
+        return this.completed;
     }
 
     // get the status text of this animation
@@ -812,6 +797,19 @@ class PlayAnimator extends MazeAnimator {
         return new MsgAnimator(this.maze,
         		"Puzzle Complete!   Moves: " + this.moves);
     }
+
+    void tryAddMove(Cell to, Cell from) {
+    	super.tryAddMove(to, from);
+    	to.onPath = true;
+    	to.traversed = true;
+    	from.onPath = false;
+    	this.head = to;
+    }
+    
+	// add given cell to the worklist
+	void addWork(Cell cell) {
+		// DO NOTHING since no worklist
+	}
 }
 
 
@@ -1038,7 +1036,7 @@ class ExamplesMaze {
 
     // test to start off big bang
     void testBigBang(Tester t) {
-        MazeWorld initWorld = new MazeWorld(100, 60, 10);
+        MazeWorld initWorld = new MazeWorld(20, 20, 30);
 
         initWorld.bigBang(initWorld.getPixelWidth(),
                 initWorld.getPixelHeight(),
