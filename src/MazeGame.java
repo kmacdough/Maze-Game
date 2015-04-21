@@ -542,29 +542,21 @@ class DFSAnimator extends MazeAnimator {
             
             if (next == this.maze.getFinalCell()) {
                 // TODO: Get reconstruct working
-//                this.reconstruct(next);
+                this.reconstruct(next);
                 this.completed = true;
             }
             else {
                 if (!next.left.isBlocking) {
-                    Cell left = next.left.cell1;
-                    this.worklist.push(left);
-                    this.cameFromCell.put(left, next);
+                    this.tryAddWork(next.left.cell1, next);
                 }
                 if (!next.top.isBlocking) {
-                    Cell top = next.top.cell1;
-                    this.worklist.push(top);
-                    this.cameFromCell.put(top, next);
+                    this.tryAddWork(next.top.cell1, next);
                 }
                 if (!next.right.isBlocking) {
-                    Cell right = next.right.cell2;
-                    this.worklist.push(right);
-                    this.cameFromCell.put(right, next);
+                    this.tryAddWork(next.right.cell2, next);
                 }
                 if (!next.bot.isBlocking) {
-                    Cell bot = next.bot.cell2;
-                    this.worklist.push(bot);
-                    this.cameFromCell.put(bot, next);
+                    this.tryAddWork(next.bot.cell2, next);
                 }
                 this.moves += 1;
             }
@@ -573,6 +565,16 @@ class DFSAnimator extends MazeAnimator {
         else {
             this.completed = true;
         }
+    }
+    
+    void tryAddWork(Cell to, Cell from) {
+    	if (to.traversed) {
+    		// do nothing
+    	}
+    	else {
+    		this.worklist.push(to);
+    		this.cameFromCell.put(to, from);
+    	}
     }
     
 //    // draw an the frame of the animation onto given background
@@ -603,18 +605,6 @@ class DFSAnimator extends MazeAnimator {
             curCell = prevCell;
             
             prevCell = this.cameFromCell.get(prevCell);
-            this.cameFromCell.remove(curCell);
-            
-//            if (curCell == prevEdge.cell1.getName()) {
-//                curCell = prevEdge.cell2.getName();
-//            }
-//            else if (curCell == prevEdge.cell2.getName()) {
-//                curCell = prevEdge.cell1.getName();
-//            }
-            
-            
-//            prevEdge = this.cameFromEdge.get(curCell);
-            System.out.println(curCell);
         }
     }
 
