@@ -534,7 +534,7 @@ class DFSAnimator extends MazeAnimator {
             else if (next == this.maze.getFinalCell()) {
                 System.out.println("Game is won");
                 // TODO: Get reconstruct working
-//                this.reconstruct(next);
+//                1(next);
                 this.completed = true;
             }
             else {
@@ -567,32 +567,29 @@ class DFSAnimator extends MazeAnimator {
         }
     }
     
-    // draw an the frame of the animation onto given background
-    WorldImage drawOnto(int cellSize, WorldImage bg) {
-        WorldImage mazeImg = this.maze.drawOnto(cellSize, bg);
-        // bottom middle of screen
-        Posn textLoc = new Posn(bg.getWidth() / 2, bg.getHeight() - 7);
-        
-        if (this.isComplete()) {
-            Posn winTextLoc = new Posn(bg.getWidth() / 2, bg.getHeight() / 2);
-            mazeImg = mazeImg.overlayImages(
-                new TextImage(winTextLoc, "Search Complete", 30, Color.GREEN));
-        }
-        
-        Posn winTextLoc = new Posn(bg.getWidth() / 2, 20);
-        mazeImg = mazeImg.overlayImages(
-            new TextImage(winTextLoc, "Moves:" + this.moves, 20, Color.BLACK));
-        
-        return mazeImg.overlayImages(
-                new TextImage(textLoc, this.status(), 15, Color.BLACK));
-    }
+//    // draw an the frame of the animation onto given background
+//    WorldImage drawOnto(int cellSize, WorldImage bg) {
+//    	WorldImage mazeImg = super.drawOnto(cellSize, bg);
+//        
+//        if (this.isComplete()) {
+//            Posn winTextLoc = new Posn(bg.getWidth() / 2, bg.getHeight() / 2);
+//            mazeImg = mazeImg.overlayImages(
+//                new TextImage(winTextLoc, "Search Complete", 30, Color.GREEN));
+//        }
+//        
+//        Posn winTextLoc = new Posn(bg.getWidth() / 2, 20);
+//        mazeImg = mazeImg.overlayImages(
+//            new TextImage(winTextLoc, "Moves:" + this.moves, 20, Color.BLACK));
+//        
+//        return mazeImg;
+//    }
     
     // find direct path from end to start and mark all cells in path
     // as being on the path
     void reconstruct(Cell cell) {
         Cell curCell = cell;
         Cell prevCell = this.cameFromCell.get(curCell);
-        while (curCell != this.maze.getFirstCell() && !curCell.onPath) {
+        while (curCell != this.maze.getFirstCell()/* && !curCell.onPath*/) {
             curCell.onPath = true;
             
             curCell = prevCell;
@@ -620,16 +617,17 @@ class DFSAnimator extends MazeAnimator {
 
     // get the status text of this animation
     String status() {
-        if (this.isComplete()) {
-            return "Completed Depth First Search";
-        } else {
-            return "Depth First Searching";
-        }
+//        if (this.isComplete()) {
+//            return "Completed Depth First Search";
+//        } else {
+            return "Depth First Searching.   Moves: " + this.moves;
+//        }
     }
 
     // next animator to use when done
     MazeAnimator nextAnimator() {
-        return this;
+        return new MsgAnimator(this.maze,
+        		"Comleted Depth First Search.   Moves: " + this.moves);
     }
 }
 
@@ -681,24 +679,21 @@ class BFSAnimator extends MazeAnimator {
     }
 
     // draw an the frame of the animation onto given background
-    WorldImage drawOnto(int cellSize, WorldImage bg) {
-        WorldImage mazeImg = this.maze.drawOnto(cellSize, bg);
-        // bottom middle of screen
-        Posn textLoc = new Posn(bg.getWidth() / 2, bg.getHeight() - 7);
-        
-        if (this.isComplete()) {
-            Posn winTextLoc = new Posn(bg.getWidth() / 2, bg.getHeight() / 2);
-            mazeImg = mazeImg.overlayImages(
-                new TextImage(winTextLoc, "Search Complete", 30, Color.GREEN));
-        }
-        
-        Posn winTextLoc = new Posn(bg.getWidth() / 2, 20);
-        mazeImg = mazeImg.overlayImages(
-            new TextImage(winTextLoc, "Moves:" + this.moves, 20, Color.BLACK));
-        
-        return mazeImg.overlayImages(
-                new TextImage(textLoc, this.status(), 15, Color.BLACK));
-    }
+//    WorldImage drawOnto(int cellSize, WorldImage bg) {
+//        WorldImage mazeImg = super.drawOnto(cellSize, bg);
+//        
+//        if (this.isComplete()) {
+//            Posn winTextLoc = new Posn(bg.getWidth() / 2, bg.getHeight() / 2);
+//            mazeImg = mazeImg.overlayImages(
+//                new TextImage(winTextLoc, "Search Complete", 30, Color.GREEN));
+//        }
+//        
+//        Posn winTextLoc = new Posn(bg.getWidth() / 2, 20);
+//        mazeImg = mazeImg.overlayImages(
+//            new TextImage(winTextLoc, "Moves:" + this.moves, 20, Color.BLACK));
+//        
+//        return mazeImg;
+//    }
     
     // is this animation complete?
     boolean isComplete() {
@@ -707,16 +702,17 @@ class BFSAnimator extends MazeAnimator {
 
     // get the status text of this animation
     String status() {
-        if (this.isComplete()) {
-            return "Completed Breadth First Search";
-        } else {
-            return "Breadth First Searching";
-        }
+//        if (this.isComplete()) {
+//            return "Completed Breadth First Search";
+//        } else {
+    	return "Breadth First Searching.   Moves: " + this.moves;
+//        }
     }
 
     // next animator to use when done
     MazeAnimator nextAnimator() {
-        return this;
+        return new MsgAnimator(this.maze,
+        		"Completed Breadth First Search.   Moves: " + this.moves);
     }
 }
 
@@ -771,25 +767,22 @@ class PlayAnimator extends MazeAnimator {
         }
     }
 
-    // draw an the frame of the animation onto given background
-    WorldImage drawOnto(int cellSize, WorldImage bg) {
-        WorldImage mazeImg = this.maze.drawOnto(cellSize, bg);
-        // bottom middle of screen
-        Posn textLoc = new Posn(bg.getWidth() / 2, bg.getHeight() - 7);
-        
-        if (this.isComplete()) {
-            Posn winTextLoc = new Posn(bg.getWidth() / 2, bg.getHeight() / 2);
-            mazeImg = mazeImg.overlayImages(
-                    new TextImage(winTextLoc, "YOU WIN", 30, Color.GREEN));
-        }
-        
-        Posn winTextLoc = new Posn(bg.getWidth() / 2, 20);
-        mazeImg = mazeImg.overlayImages(
-            new TextImage(winTextLoc, "Moves:" + this.moves, 20, Color.BLACK));
-        
-        return mazeImg.overlayImages(
-            new TextImage(textLoc, this.status(), 15, Color.BLACK));
-    }
+//    // draw an the frame of the animation onto given background
+//    WorldImage drawOnto(int cellSize, WorldImage bg) {
+//        WorldImage mazeImg = super.drawOnto(cellSize, bg);
+//        
+//        if (this.isComplete()) {
+//            Posn winTextLoc = new Posn(bg.getWidth() / 2, bg.getHeight() / 2);
+//            mazeImg = mazeImg.overlayImages(
+//                    new TextImage(winTextLoc, "YOU WIN", 30, Color.GREEN));
+//        }
+//        
+//        Posn winTextLoc = new Posn(bg.getWidth() / 2, 20);
+//        mazeImg = mazeImg.overlayImages(
+//            new TextImage(winTextLoc, "Moves:" + this.moves, 20, Color.BLACK));
+//        
+//        return mazeImg;
+//    }
     
     // is this animation complete?
     boolean isComplete() {
@@ -798,12 +791,13 @@ class PlayAnimator extends MazeAnimator {
 
     // get the status text of this animation
     String status() {
-        return "Idle";
+        return "Player Solving Puzzle.   Moves: " + this.moves;
     }
 
     // next animator to use when done
     MazeAnimator nextAnimator() {
-        return this;
+        return new MsgAnimator(this.maze,
+        		"Puzzle Complete!   Moves: " + this.moves);
     }
 }
 
@@ -833,6 +827,20 @@ class IdleAnimator extends MazeAnimator {
     MazeAnimator nextAnimator() {
         return this;
     }
+}
+
+// a blank maze animator that allows for a specific message to be played
+class MsgAnimator extends IdleAnimator {
+	String msg;
+
+	MsgAnimator(Maze maze, String msg) {
+		super(maze);
+		this.msg = msg;
+	}
+	
+	String status() {
+		return msg;
+	}
 }
 
 // animate Kruskal generation of a maze
@@ -992,9 +1000,6 @@ class MazeWorld extends World {
         // complete animation
         else if (ke.equals("\n")) {
             this.animator = new InstantAnimator(this.maze, this.animator);
-        }
-        else {
-            System.out.println(ke);
         }
 
         animator.onKeyEvent(ke);
