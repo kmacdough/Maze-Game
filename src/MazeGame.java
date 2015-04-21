@@ -2,6 +2,7 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Random;
+import java.util.Stack;
 
 import javalib.impworld.World;
 import javalib.worldimages.*;
@@ -26,9 +27,10 @@ class Cell {
 	Edge top;
 	Edge right;
 	Edge bot;
+	boolean traversed;
 
 	// Default constructor
-	Cell(int x, int y, Edge left, Edge top, Edge right, Edge bot) {
+	Cell(int x, int y, Edge left, Edge top, Edge right, Edge bot, boolean traversed) {
 		this.x = x;
 		this.y = y;
 		this.left = left;
@@ -45,6 +47,7 @@ class Cell {
 		this.top = null;
 		this.right = null;
 		this.bot = null;
+		this.traversed = false;
 	}
 
 	// draws this cell, along with its bottom and right edges
@@ -67,8 +70,12 @@ class Cell {
 	}
 
 	Color getColor() {
-		// Hue 282
-		return new Color(203, 188, 227);
+	    if (this.traversed) {
+	        return new Color(150, 150, 220);	        
+	    } else {
+    		// Hue 282
+    		return new Color(203, 188, 227);
+	    }
 	}
 
 }
@@ -352,6 +359,26 @@ class Maze {
 		edges.sort(new EdgeWeightComp());
 	}
 
+    // Returns the bottom-right cell of this maze
+    Cell getFinalCell() {
+        ArrayList<Cell> lastCol = this.cells.get(this.cells.size() - 1);
+        return lastCol.get(lastCol.size() - 1);
+    }
+    
+    // Returns the top-left cell of this maze
+    Cell getFirstCell() {
+        return this.cells.get(0).get(0);
+    }
+    
+    // Resets every cell in this maze to be not marked as traversed
+    void resetTraversals() {
+        for (ArrayList<Cell> col: cells) {
+            for (Cell cell: col) {
+                cell.traversed = false;
+            }
+        }
+    }
+
 //	// EFFECT: modifies isBlocking fields of edges to generate a maze using
 //	//   Kruskal's algorithm immediately
 //	void generateMazeFast() {
@@ -449,7 +476,7 @@ abstract class MazeAnimator {
 	
 	// react to keystrokes from user
 	void onKeyEvent(String ke) {
-		
+
 	}
 	
 	// get the status text of this animation
@@ -460,6 +487,66 @@ abstract class MazeAnimator {
 	
 	// next animator to use when done
 	abstract MazeAnimator nextAnimator();
+}
+
+// animate a depth-first search of a maze
+class DFSAnimator extends MazeAnimator {
+    Stack<Cell> worklist;
+    boolean completed;
+    
+    DFSAnimator(Maze maze) {
+        super(maze);
+        this.maze.resetTraversals();
+        this.worklist = new Stack<Cell>();
+        this.worklist.push(this.maze.getFirstCell());
+        this.completed = false;
+    }
+
+    // EFFECT: update this Animator's fields to progress one step
+    void onTick() {
+        if (!this.isComplete() && !this.worklist.empty()) {
+            Cell next = worklist.pop();
+            
+            if (next.traversed) {
+                // Do Nothing
+            }
+            else if (next == this.maze.getFinalCell()) {
+                System.out.println("Game is won");
+                this.completed = true;
+            }
+            else {
+                if (!next.left.isBlocking) {
+                    this.worklist.push(next.left.cell1);
+                }
+                if (!next.top.isBlocking) {
+                    this.worklist.push(next.top.cell1);
+                }
+                if (!next.right.isBlocking) {
+                    this.worklist.push(next.right.cell2);
+                }
+                if (!next.bot.isBlocking) {
+                    this.worklist.push(next.bot.cell2);
+                }
+            }
+            
+            next.traversed = true;
+        }
+    }
+
+    // is this animation complete?
+    boolean isComplete() {
+        return this.completed;
+    }
+
+    // get the status text of this animation
+    String status() {
+        return "Depth First Searching";
+    }
+
+    // next animator to use when done
+    MazeAnimator nextAnimator() {
+        return this;
+    }
 }
 
 // a blank maze animator that just shows a maze
@@ -621,7 +708,11 @@ class MazeWorld extends World {
 		else if (ke.equals("g")) {
 			this.animator =
 					new KruskalAnimator(this.maze, this.width, this.height);
-		}
+		}     
+		// begin depth-first search
+        else if (ke.equals("d")) {
+            this.animator = new DFSAnimator(this.maze);
+        }
 		// reset maze
 		else if (ke.equals("\b")) {
 			this.maze = new Maze(this.width, this.height);
