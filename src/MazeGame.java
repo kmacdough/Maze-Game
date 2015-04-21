@@ -512,6 +512,7 @@ class DFSAnimator extends MazeAnimator {
     
     Stack<Cell> worklist;
     boolean completed;
+    int moves;
 
     DFSAnimator(Maze maze) {
         super(maze);
@@ -519,6 +520,7 @@ class DFSAnimator extends MazeAnimator {
         this.worklist = new Stack<Cell>();
         this.worklist.push(this.maze.getFirstCell());
         this.completed = false;
+        this.moves = 0;
     }
 
     // EFFECT: update this Animator's fields to progress one step
@@ -556,12 +558,33 @@ class DFSAnimator extends MazeAnimator {
                     this.worklist.push(bot);
                     this.cameFromCell.put(bot, next);
                 }
+                this.moves += 1;
             }
             next.traversed = true;
         } 
         else {
             this.completed = true;
         }
+    }
+    
+    // draw an the frame of the animation onto given background
+    WorldImage drawOnto(int cellSize, WorldImage bg) {
+        WorldImage mazeImg = this.maze.drawOnto(cellSize, bg);
+        // bottom middle of screen
+        Posn textLoc = new Posn(bg.getWidth() / 2, bg.getHeight() - 7);
+        
+        if (this.isComplete()) {
+            Posn winTextLoc = new Posn(bg.getWidth() / 2, bg.getHeight() / 2);
+            mazeImg = mazeImg.overlayImages(
+                new TextImage(winTextLoc, "Search Complete", 30, Color.GREEN));
+        }
+        
+        Posn winTextLoc = new Posn(bg.getWidth() / 2, 20);
+        mazeImg = mazeImg.overlayImages(
+            new TextImage(winTextLoc, "Moves:" + this.moves, 20, Color.BLACK));
+        
+        return mazeImg.overlayImages(
+                new TextImage(textLoc, this.status(), 15, Color.BLACK));
     }
     
     // find direct path from end to start and mark all cells in path
@@ -615,12 +638,14 @@ class BFSAnimator extends MazeAnimator {
     // TODO: Make our own implementation of queue
     LinkedList<Cell> worklist;
     boolean completed;
+    int moves;
 
     BFSAnimator(Maze maze) {
         super(maze);
         this.worklist = new LinkedList<Cell>();
         this.worklist.add(this.maze.getFirstCell());
         this.completed = false;
+        this.moves = 0;
     }
 
     // EFFECT: update this Animator's fields to progress one step
@@ -648,12 +673,33 @@ class BFSAnimator extends MazeAnimator {
                 if (!next.bot.isBlocking) {
                     this.worklist.add(next.bot.cell2);
                 }
+                this.moves += 1;
             }
 
             next.traversed = true;
         }
     }
 
+    // draw an the frame of the animation onto given background
+    WorldImage drawOnto(int cellSize, WorldImage bg) {
+        WorldImage mazeImg = this.maze.drawOnto(cellSize, bg);
+        // bottom middle of screen
+        Posn textLoc = new Posn(bg.getWidth() / 2, bg.getHeight() - 7);
+        
+        if (this.isComplete()) {
+            Posn winTextLoc = new Posn(bg.getWidth() / 2, bg.getHeight() / 2);
+            mazeImg = mazeImg.overlayImages(
+                new TextImage(winTextLoc, "Search Complete", 30, Color.GREEN));
+        }
+        
+        Posn winTextLoc = new Posn(bg.getWidth() / 2, 20);
+        mazeImg = mazeImg.overlayImages(
+            new TextImage(winTextLoc, "Moves:" + this.moves, 20, Color.BLACK));
+        
+        return mazeImg.overlayImages(
+                new TextImage(textLoc, this.status(), 15, Color.BLACK));
+    }
+    
     // is this animation complete?
     boolean isComplete() {
         return this.completed;
@@ -677,11 +723,14 @@ class BFSAnimator extends MazeAnimator {
 // User-controlled animator for maze traversal
 class PlayAnimator extends MazeAnimator {
     Cell head;
+    int moves;
     
     PlayAnimator(Maze maze) {
         super(maze);
         this.head = maze.getFirstCell();
         head.traversed = true;
+        head.onPath = true;
+        moves = 0;
     }
 
     // EFFECT: update this Animator's fields to progress one step
@@ -696,24 +745,28 @@ class PlayAnimator extends MazeAnimator {
                 this.head = this.head.left.cell1;
                 this.head.traversed = true;
                 this.head.onPath = true;
+                moves += 1;
             }
             if (ke == "up" && !this.head.top.isBlocking) {
                 this.head.onPath = false;
                 this.head = this.head.top.cell1;
                 this.head.traversed = true;
                 this.head.onPath = true;
+                moves += 1;
             }
             if (ke == "right" && !this.head.right.isBlocking) {
                 this.head.onPath = false;
                 this.head = this.head.right.cell2;
                 this.head.traversed = true;
                 this.head.onPath = true;
+                moves += 1;
             }
             if (ke == "down" && !this.head.bot.isBlocking) {
                 this.head.onPath = false;
                 this.head = this.head.bot.cell2;
                 this.head.traversed = true;
                 this.head.onPath = true;
+                moves += 1;
             }
         }
     }
@@ -730,8 +783,12 @@ class PlayAnimator extends MazeAnimator {
                     new TextImage(winTextLoc, "YOU WIN", 30, Color.GREEN));
         }
         
+        Posn winTextLoc = new Posn(bg.getWidth() / 2, 20);
+        mazeImg = mazeImg.overlayImages(
+            new TextImage(winTextLoc, "Moves:" + this.moves, 20, Color.BLACK));
+        
         return mazeImg.overlayImages(
-                new TextImage(textLoc, this.status(), 15, Color.BLACK));
+            new TextImage(textLoc, this.status(), 15, Color.BLACK));
     }
     
     // is this animation complete?
