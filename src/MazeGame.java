@@ -87,7 +87,7 @@ class Cell {
             return new Color(203, 188, 227);
         }
     }
-    
+
     // Returns the name of this cell as a string of its position
     String getName() {
         return Integer.toString(this.x).concat(Integer.toString(this.y));
@@ -469,10 +469,10 @@ abstract class MazeAnimator {
     void onKeyEvent(String ke) {
 
     }
-    
+
     // does this animator guarantee termination?
     boolean alwaysTerminates() {
-    	return true;
+        return true;
     }
 
     // get the status text of this animation
@@ -490,25 +490,25 @@ abstract class SolveAnimator extends MazeAnimator {
     // Note: cameFromCell connects each cell to its previous cell
     HashMap<Cell, Cell> cameFromCell;
     boolean completed;
-	int moves;
+    int moves;
 
-	SolveAnimator(Maze maze) {
-		super(maze);
-		this.cameFromCell = new HashMap<Cell, Cell>();
-		completed = false;
-		moves = 0;
-	}
-	
-	// try to make the move between given cells
-	void tryAddMove(Cell to, Cell from) {
-    	if (!to.traversed) {
-    		this.addWork(to);
-    		this.cameFromCell.put(to, from);
-    	}
-	}
+    SolveAnimator(Maze maze) {
+        super(maze);
+        this.cameFromCell = new HashMap<Cell, Cell>();
+        completed = false;
+        moves = 0;
+    }
+
+    // try to make the move between given cells
+    void tryAddMove(Cell to, Cell from) {
+        if (!to.traversed) {
+            this.addWork(to);
+            this.cameFromCell.put(to, from);
+        }
+    }
 
     // EFFECT: add given cell to the worklist
-	abstract void addWork(Cell cell);
+    abstract void addWork(Cell cell);
 
     // find direct path from end to start and mark all cells in path
     // as being on the path
@@ -517,38 +517,38 @@ abstract class SolveAnimator extends MazeAnimator {
         Cell prevCell = this.cameFromCell.get(curCell);
         while (curCell != this.maze.getFirstCell()/* && !curCell.onPath*/) {
             curCell.onPath = true;
-            
+
             curCell = prevCell;
-            
+
             prevCell = this.cameFromCell.get(prevCell);
         }
         curCell.onPath = true;
     }
-    
+
     // is this animation completed?
     boolean isComplete() {
-    	return this.completed;
+        return this.completed;
     }
 }
 
 // to represent an automatic solver animation
 abstract class AutoSolveAnimator extends SolveAnimator {
 
-	AutoSolveAnimator(Maze maze) {
-		super(maze);
-	}
-	
-	// EFFECT: changes the maze and fields on this animator to progress
-	//   algorithm
-	void onTick() {
-    	if (!this.hasWork()) {
-    		this.completed = true;
-    	}
-    	else if (!this.isComplete()) {
-        	Cell next = this.getWork();
+    AutoSolveAnimator(Maze maze) {
+        super(maze);
+    }
+
+    // EFFECT: changes the maze and fields on this animator to progress
+    //   algorithm
+    void onTick() {
+        if (!this.hasWork()) {
+            this.completed = true;
+        }
+        else if (!this.isComplete()) {
+            Cell next = this.getWork();
             // indicate we've now visited this cell
             next.traversed = true;
-            
+
             if (next == this.maze.getFinalCell()) {
                 this.reconstruct(next);
                 this.completed = true;
@@ -570,19 +570,19 @@ abstract class AutoSolveAnimator extends SolveAnimator {
                 this.moves += 1;
             }
         }
-		
-	}
 
-	// get next cell to work on
-	abstract Cell getWork();
+    }
 
-	// are there more cells to work on?
-	abstract boolean hasWork();
+    // get next cell to work on
+    abstract Cell getWork();
+
+    // are there more cells to work on?
+    abstract boolean hasWork();
 }
 
 // animate a depth-first search of a maze
 class DFSAnimator extends AutoSolveAnimator {
-    
+
     Stack<Cell> worklist;
 
     DFSAnimator(Maze maze) {
@@ -593,29 +593,29 @@ class DFSAnimator extends AutoSolveAnimator {
 
     // get the status text of this animation
     String status() {
-    	return "Depth First Searching.   Moves: " + this.moves;
+        return "Depth First Searching.   Moves: " + this.moves;
     }
 
     // next animator to use when done
     MazeAnimator nextAnimator() {
         return new MsgAnimator(this.maze,
-        		"Comleted Depth First Search.   Moves: " + this.moves);
+                "Comleted Depth First Search.   Moves: " + this.moves);
     }
 
     // EFFECT: add given cell to the worklist
-	void addWork(Cell cell) {
-		this.worklist.push(cell);
-	}
+    void addWork(Cell cell) {
+        this.worklist.push(cell);
+    }
 
-	// get next cell to work on
-	Cell getWork() {
-		return this.worklist.pop();
-	}
+    // get next cell to work on
+    Cell getWork() {
+        return this.worklist.pop();
+    }
 
-	// are there more cells to work on?
-	boolean hasWork() {
-		return !this.worklist.empty();
-	}
+    // are there more cells to work on?
+    boolean hasWork() {
+        return !this.worklist.empty();
+    }
 }
 
 //animate a breadth-first search of a maze
@@ -628,7 +628,7 @@ class BFSAnimator extends AutoSolveAnimator {
         this.worklist = new LinkedList<Cell>();
         this.worklist.add(this.maze.getFirstCell());
     }
-    
+
     // is this animation complete?
     boolean isComplete() {
         return this.completed;
@@ -636,36 +636,36 @@ class BFSAnimator extends AutoSolveAnimator {
 
     // get the status text of this animation
     String status() {
-    	return "Breadth First Searching.   Moves: " + this.moves;
+        return "Breadth First Searching.   Moves: " + this.moves;
     }
 
     // next animator to use when done
     MazeAnimator nextAnimator() {
         return new MsgAnimator(this.maze,
-        		"Completed Breadth First Search.   Moves: " + this.moves);
+                "Completed Breadth First Search.   Moves: " + this.moves);
     }
 
-	// add given cell to the worklist
-	void addWork(Cell cell) {
-		this.worklist.add(cell);
-	}
+    // add given cell to the worklist
+    void addWork(Cell cell) {
+        this.worklist.add(cell);
+    }
 
-	// get next cell to work on
-	Cell getWork() {
-		return this.worklist.remove();
-	}
+    // get next cell to work on
+    Cell getWork() {
+        return this.worklist.remove();
+    }
 
-	// are there more cells to work on?
-	boolean hasWork() {
-		// TODO Auto-generated method stub
-		return !this.worklist.isEmpty();
-	}
+    // are there more cells to work on?
+    boolean hasWork() {
+        // TODO Auto-generated method stub
+        return !this.worklist.isEmpty();
+    }
 }
 
 // User-controlled animator for maze traversal
 class PlayAnimator extends SolveAnimator {
     Cell head;
-    
+
     PlayAnimator(Maze maze) {
         super(maze);
         this.head = maze.getFirstCell();
@@ -677,32 +677,32 @@ class PlayAnimator extends SolveAnimator {
     void onTick() {
         // do nothing since only operates on keypresses
     }
-    
+
     void onKeyEvent(String ke) {
         if (!this.isComplete()) {
             if (ke == "left" && !this.head.left.isBlocking) {
-            	tryAddMove(this.head.left.cell1, this.head);
+                tryAddMove(this.head.left.cell1, this.head);
                 moves += 1;
             }
             if (ke == "up" && !this.head.top.isBlocking) {
-            	tryAddMove(this.head.top.cell1, this.head);
+                tryAddMove(this.head.top.cell1, this.head);
                 moves += 1;
             }
             if (ke == "right" && !this.head.right.isBlocking) {
-            	tryAddMove(this.head.right.cell2, this.head);
+                tryAddMove(this.head.right.cell2, this.head);
                 moves += 1;
             }
             if (ke == "down" && !this.head.bot.isBlocking) {
-            	tryAddMove(this.head.bot.cell2, this.head);
+                tryAddMove(this.head.bot.cell2, this.head);
                 moves += 1;
             }
             if (this.head == this.maze.getFinalCell()) {
-            	this.completed = true;
-            	this.reconstruct(head);
+                this.completed = true;
+                this.reconstruct(head);
             }
         }
     }
-    
+
     // is this animation complete?
     boolean isComplete() {
         return this.completed;
@@ -716,26 +716,26 @@ class PlayAnimator extends SolveAnimator {
     // next animator to use when done
     MazeAnimator nextAnimator() {
         return new MsgAnimator(this.maze,
-        		"Puzzle Complete!   Moves: " + this.moves);
+                "Puzzle Complete!   Moves: " + this.moves);
     }
 
     void tryAddMove(Cell to, Cell from) {
-    	super.tryAddMove(to, from);
-    	to.onPath = true;
-    	to.traversed = true;
-    	from.onPath = false;
-    	this.head = to;
+        super.tryAddMove(to, from);
+        to.onPath = true;
+        to.traversed = true;
+        from.onPath = false;
+        this.head = to;
     }
-    
-	// add given cell to the worklist
-	void addWork(Cell cell) {
-		// DO NOTHING since no worklist
-	}
-	
-	// does this animator always terminate?
-	boolean alwaysTerminates() {
-		return false;
-	}
+
+    // add given cell to the worklist
+    void addWork(Cell cell) {
+        // DO NOTHING since no worklist
+    }
+
+    // does this animator always terminate?
+    boolean alwaysTerminates() {
+        return false;
+    }
 }
 
 
@@ -768,16 +768,16 @@ class IdleAnimator extends MazeAnimator {
 
 // a blank maze animator that allows for a specific message to be played
 class MsgAnimator extends IdleAnimator {
-	String msg;
+    String msg;
 
-	MsgAnimator(Maze maze, String msg) {
-		super(maze);
-		this.msg = msg;
-	}
-	
-	String status() {
-		return msg;
-	}
+    MsgAnimator(Maze maze, String msg) {
+        super(maze);
+        this.msg = msg;
+    }
+
+    String status() {
+        return msg;
+    }
 }
 
 // animate Kruskal generation of a maze
@@ -845,11 +845,11 @@ class InstantAnimator extends MazeAnimator {
 
     // instantly complete animation
     void onTick() {
-    	if(this.anim.alwaysTerminates()) {
-    		while(!this.anim.isComplete()) {
-    			this.anim.onTick();
-    		}
-    	}
+        if(this.anim.alwaysTerminates()) {
+            while(!this.anim.isComplete()) {
+                this.anim.onTick();
+            }
+        }
     }
 
     // get status for this animator
@@ -859,22 +859,22 @@ class InstantAnimator extends MazeAnimator {
 
     // is this animation complete?
     boolean isComplete() {
-    	if (this.anim.alwaysTerminates()) {
-    		return this.anim.isComplete();
-    	}
-    	else {
-    		return true;
-    	}
+        if (this.anim.alwaysTerminates()) {
+            return this.anim.isComplete();
+        }
+        else {
+            return true;
+        }
     }
 
     // next animator to use when done
     MazeAnimator nextAnimator() {
-    	if (this.anim.alwaysTerminates()) {
-    		return this.anim.nextAnimator();
-    	}
-    	else {
-    		return this.anim;
-    	}
+        if (this.anim.alwaysTerminates()) {
+            return this.anim.nextAnimator();
+        }
+        else {
+            return this.anim;
+        }
     }
 }
 
@@ -890,14 +890,14 @@ class MazeWorld extends World {
 
     // Constructor automatically initializing with a small maze
     MazeWorld() {
-    	initialize(50, 30, 20, "Large Maze");
+        initialize(50, 30, 20, "Large Maze");
     }
-    
+
     // Constructor to make a maze with specific dimensions and label
     MazeWorld(int width, int height, int cellSize, String label) {
-    	initialize(width, height, cellSize, label);
+        initialize(width, height, cellSize, label);
     }
-    
+
     // initialize this world
     void initialize(int width, int height, int cellSize, String label) {
         this.width = width;
@@ -929,11 +929,11 @@ class MazeWorld extends World {
     public void onKeyEvent(String ke) {
         // assign random weights
         if (ke.equals("r")) {
-        	// only adjust weights if maze is idle
-        	if (this.animator.isComplete()) {
-        		this.maze.assignRandomWeights();
-        		this.animator = new MsgAnimator(this.maze, "Weights Randomized");
-        	}
+            // only adjust weights if maze is idle
+            if (this.animator.isComplete()) {
+                this.maze.assignRandomWeights();
+                this.animator = new MsgAnimator(this.maze, "Weights Randomized");
+            }
         }
         // generate maze
         else if (ke.equals("g")) {
@@ -967,19 +967,19 @@ class MazeWorld extends World {
         }
         // Set different size mazes
         else if (ke.equals("1")) {
-        	initialize(10, 6, 100, "Tiny Maze");
+            initialize(10, 6, 100, "Tiny Maze");
         }
         else if (ke.equals("2")) {
-        	initialize(25, 15, 40, "Small Maze");
+            initialize(25, 15, 40, "Small Maze");
         }
         else if (ke.equals("3")) {
-        	initialize(50, 30, 20, "Large Maze");
+            initialize(50, 30, 20, "Large Maze");
         }
         else if (ke.equals("4")) {
-        	initialize(100, 60, 10, "Huge Maze");
+            initialize(100, 60, 10, "Huge Maze");
         }
         else if (ke.equals("5")) {
-        	initialize(200, 120, 5, "Gigantic Maze");
+            initialize(200, 120, 5, "Gigantic Maze");
         }
 
         animator.onKeyEvent(ke);
