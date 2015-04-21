@@ -525,16 +525,24 @@ class DFSAnimator extends MazeAnimator {
 
     // EFFECT: update this Animator's fields to progress one step
     void onTick() {
-        if (!this.isComplete() && !this.worklist.empty()) {
-            Cell next = worklist.pop();
+    	if (this.worklist.empty()) {
+    		this.completed = true;
+    	}
+    	else if (!this.isComplete()) {
+        	Cell next = worklist.pop();
 
-            if (next.traversed) {
-                // Do Nothing
+            while (next.traversed) {
+            	if (this.worklist.isEmpty()) {
+            		return;
+            	}
+            	else {
+            		next = worklist.pop(); 
+            	}
             }
-            else if (next == this.maze.getFinalCell()) {
-                System.out.println("Game is won");
+            
+            if (next == this.maze.getFinalCell()) {
                 // TODO: Get reconstruct working
-//                1(next);
+//                this.reconstruct(next);
                 this.completed = true;
             }
             else {
@@ -648,14 +656,22 @@ class BFSAnimator extends MazeAnimator {
 
     // EFFECT: update this Animator's fields to progress one step
     void onTick() {
-        if (!this.isComplete() && !this.worklist.isEmpty()) {
+    	if (this.worklist.isEmpty()) {
+    		this.completed = true;
+    	}
+        if (!this.isComplete()) {
             Cell next = worklist.remove();
 
-            if (next.traversed) {
-                // Do Nothing
+            while (next.traversed) {
+            	if (this.worklist.isEmpty()) {
+            		return;
+            	}
+            	else {
+            		next = worklist.remove(); 
+            	}
             }
-            else if (next == this.maze.getFinalCell()) {
-                System.out.println("Game is won");
+            
+            if (next == this.maze.getFinalCell()) {
                 this.completed = true;
             }
             else {
