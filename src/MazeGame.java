@@ -469,6 +469,11 @@ abstract class MazeAnimator {
     void onKeyEvent(String ke) {
 
     }
+    
+    // does this animator guarantee termination?
+    boolean alwaysTerminates() {
+    	return true;
+    }
 
     // get the status text of this animation
     abstract String status();
@@ -726,6 +731,11 @@ class PlayAnimator extends SolveAnimator {
 	void addWork(Cell cell) {
 		// DO NOTHING since no worklist
 	}
+	
+	// does this animator always terminate?
+	boolean alwaysTerminates() {
+		return false;
+	}
 }
 
 
@@ -835,9 +845,11 @@ class InstantAnimator extends MazeAnimator {
 
     // instantly complete animation
     void onTick() {
-        while(!this.anim.isComplete()) {
-            this.anim.onTick();
-        }
+    	if(this.anim.alwaysTerminates()) {
+    		while(!this.anim.isComplete()) {
+    			this.anim.onTick();
+    		}
+    	}
     }
 
     // get status for this animator
@@ -847,12 +859,22 @@ class InstantAnimator extends MazeAnimator {
 
     // is this animation complete?
     boolean isComplete() {
-        return this.anim.isComplete();
+    	if (this.anim.alwaysTerminates()) {
+    		return this.anim.isComplete();
+    	}
+    	else {
+    		return true;
+    	}
     }
 
     // next animator to use when done
     MazeAnimator nextAnimator() {
-        return this.anim.nextAnimator();
+    	if (this.anim.alwaysTerminates()) {
+    		return this.anim.nextAnimator();
+    	}
+    	else {
+    		return this.anim;
+    	}
     }
 }
 
