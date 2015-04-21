@@ -950,12 +950,23 @@ class MazeWorld extends World {
     // animates certain algorithms on the maze
     MazeAnimator animator;
 
-    MazeWorld(int width, int height, int cellSize) {
+    // Constructor automatically initializing with a small maze
+    MazeWorld() {
+    	initialize(50, 30, 20, "Large Maze");
+    }
+    
+    // Constructor to make a maze with specific dimensions and label
+    MazeWorld(int width, int height, int cellSize, String label) {
+    	initialize(width, height, cellSize, label);
+    }
+    
+    // initialize this world
+    void initialize(int width, int height, int cellSize, String label) {
         this.width = width;
         this.height = height;
         this.cellSize = cellSize;
         this.maze = new Maze(width, height);
-        this.animator = new IdleAnimator(maze);
+        this.animator = new MsgAnimator(maze, label);
     }
 
     public WorldImage makeImage() {
@@ -1016,6 +1027,22 @@ class MazeWorld extends World {
         else if (ke.equals("\n")) {
             this.animator = new InstantAnimator(this.maze, this.animator);
         }
+        // Set different size mazes
+        else if (ke.equals("1")) {
+        	initialize(10, 6, 100, "Tiny Maze");
+        }
+        else if (ke.equals("2")) {
+        	initialize(25, 15, 40, "Small Maze");
+        }
+        else if (ke.equals("3")) {
+        	initialize(50, 30, 20, "Large Maze");
+        }
+        else if (ke.equals("4")) {
+        	initialize(100, 60, 10, "Huge Maze");
+        }
+        else if (ke.equals("5")) {
+        	initialize(200, 120, 5, "Gigantic Maze");
+        }
 
         animator.onKeyEvent(ke);
     }
@@ -1027,7 +1054,7 @@ class MazeWorld extends World {
 
     // return the height of the maze in pixels 
     int getPixelHeight() {
-        return this.height * this.cellSize + 20;
+        return this.height * this.cellSize + 25;
     }
 }
 
@@ -1036,7 +1063,7 @@ class ExamplesMaze {
 
     // test to start off big bang
     void testBigBang(Tester t) {
-        MazeWorld initWorld = new MazeWorld(20, 20, 30);
+        MazeWorld initWorld = new MazeWorld();
 
         initWorld.bigBang(initWorld.getPixelWidth(),
                 initWorld.getPixelHeight(),
