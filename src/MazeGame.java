@@ -1,10 +1,9 @@
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Random;
-import java.util.Stack;
 
 import javalib.impworld.World;
 import javalib.worldimages.*;
@@ -21,16 +20,106 @@ import tester.*;
 //       at the origin), we decided to use a 2 dimensional ArrayList instead of
 //       a HashMap as our underlying data structure for union-find
 
+// to represent a stack of Ts
+class Stack<T> {
+    // stores all items in the stack, with the last item being the top
+    ArrayList<T> stack;
+    
+    Stack() {
+        this.stack = new ArrayList<T>();
+    }
+    
+    // EFFECT: add an element to the end of stack
+    void push(T item) {
+        stack.add(item);
+    }
+    
+    // EFFECT: remove the last element of stack, and return it
+    T pop() {
+        return this.stack.remove(stack.size() - 1);
+    }
+    
+    // the size of this stack
+    int size() {
+        return stack.size();
+    }
+    
+    // is this stack empty?
+    boolean isEmpty() {
+        return this.size() == 0;
+    }
+}
+
+// to represent a queue of Ts
+class Queue<T> {
+    // location of first item in queue
+    int head; 
+    // stores all items in the queue with given head and last item at the end
+    ArrayList<T> queue;
+    
+    Queue() {
+        this.head = 0;
+        this.queue = new ArrayList<T>();
+    }
+    
+    // EFFECT: adds given item to the end of the queue
+    void enqueue(T item) {
+        this.queue.add(item);
+    }
+    
+    // EFFECT: gets item at head, increments head, then returns item
+    T dequeue() {
+        T item = this.queue.get(head);
+        head += 1;
+        
+        // if the extra space at the front is too wasteful, reset
+        if (head > 20 && this.head > this.queue.size() / 3) {
+            this.reset();
+        }
+        
+        return item;
+    }
+    
+    // the size of this queue
+    int size() {
+        return this.queue.size() - this.head;
+    }
+    
+    // is this queue empty?
+    boolean isEmpty() {
+        return this.size() == 0;
+    }
+    
+    // EFFECT: creates a new ArrayList with all items in queue and head = 0
+    void reset() {
+        ArrayList<T> newQueue = new ArrayList<T>(this.size());
+        
+        // add all items to the new list
+        while(!this.isEmpty()) {
+            // dequeue code without if block
+            newQueue.add(this.queue.get(head));
+            head += 1;
+        }
+        
+        this.queue = newQueue;
+        this.head = 0;
+    }
+}
+
 // to represent a square in the maze game
 class Cell {
-    int x; // in grid coords
-    int y; // in grid coords
+    // position in grid coordinates
+    int x;
+    int y;
+    // edges of the cell
     Edge left;
     Edge top;
     Edge right;
     Edge bot;
+    // has this cell been traversed?
     boolean traversed;
-    boolean onPath; // is this cell on the direct path to the exit?
+    // is this cell on the direct path to the exit?
+    boolean onPath;
 
     // Default constructor
     Cell(int x, int y, Edge left, Edge top, Edge right, Edge bot, 
@@ -75,6 +164,7 @@ class Cell {
 
     }
 
+    // get the color of this cell
     Color getColor() {
         if (this.onPath) {
             return new Color(250, 70, 70);
@@ -96,13 +186,19 @@ class Cell {
 
 // to represent a wall between two cells
 abstract class Edge {
+    // default color of edges
     static final Color COLOR = new Color(73, 46, 116);
 
+    // the two cells this edge connects to; order is important but depends
+    // on orientation
     Cell cell1;
     Cell cell2;
+    // is this edge blocking movement?
     boolean isBlocking;
+    // traversal weight of this edge
     double weight;
 
+    // Create an edge connecting given cells with given attributes
     Edge(Cell cell1, Cell cell2, boolean isBlocking, double weight) {
         this.cell1 = cell1;
         this.cell2 = cell2;
@@ -110,8 +206,9 @@ abstract class Edge {
         this.weight = weight;
     }
 
+    // create a picture of this edge if on screen
     WorldImage draw(int cellSize) {
-        // nonexistant walls draw offscreen (no dummy image type)
+        // non-existant walls draw off screen (for lack of dummy image type)
         if(!isBlocking) {
             return new RectangleImage(new Posn(-1, -1), 0, 0, Color.BLACK);
         }
@@ -122,6 +219,7 @@ abstract class Edge {
     // gets the image of this edge regardless of isBlocking
     abstract WorldImage getImage(int cellSize);
 
+    // get the color of this edge
     Color getColor() {
         // Hue 282
         return Edge.COLOR;
@@ -155,8 +253,10 @@ class TBEdge extends Edge {
     // returns the image of this edge
     WorldImage getImage(int cellSize) {
 
+        // coordinates of the lower cell in grid coordinates
         int botCellX = this.cell2.x;
         int botCellY = this.cell2.y ;
+        // graphical center of edge
         Posn center = new Posn(botCellX * cellSize + cellSize / 2,
                 botCellY * cellSize);
 
@@ -165,8 +265,9 @@ class TBEdge extends Edge {
     }
 }
 
-//to represent an edge that is on the border of the maze
+// to represent an edge that is on the border of the maze
 class BorderEdge extends Edge {
+    // Default Constructor
     BorderEdge(Cell cell) {
         super(cell, cell, true, 0);
     }
@@ -328,37 +429,39 @@ class Maze {
         int width = maxX - minX; // in cells
         int height = maxY - minY; // in cells
 
+        // should never be tasked with drawing empty sections
         if (width <= 0 || height <= 0) {
             throw new RuntimeException("Drawing Empty Section");
         }
+        // base case: draw 1 cell
         else if (width == 1 && height == 1) {
             return this.cells.get(minX).get(minY).draw(cellSize);
         } 
+        // halve the drawing vertically
+        else if (width == 1) {
+            // CONTEXT: height is greater than 1
+            int midY = (minY + maxY) / 2;
+            WorldImage topHalf = 
+                    this.drawSection(cellSize, minX, minY, maxX, midY);
+            WorldImage botHalf = 
+                    this.drawSection(cellSize, minX, midY, maxX, maxY);
+            return topHalf.overlayImages(botHalf);
+        } 
+        // halve the drawing horizontally
         else {
-            if (width == 1) {
-                // height is greater than 1
-                int midY = (minY + maxY) / 2;
-                WorldImage topHalf = 
-                        this.drawSection(cellSize, minX, minY, maxX, midY);
-                WorldImage botHalf = 
-                        this.drawSection(cellSize, minX, midY, maxX, maxY);
-                return topHalf.overlayImages(botHalf);
-            } 
-            else {
-                int midX = (minX + maxX) / 2;
-                WorldImage leftHalf = 
-                        this.drawSection(cellSize, minX, minY, midX, maxY);
-                WorldImage rightHalf = 
-                        this.drawSection(cellSize, midX, minY, maxX, maxY);
-                return leftHalf.overlayImages(rightHalf);
-            }
+            int midX = (minX + maxX) / 2;
+            WorldImage leftHalf = 
+                    this.drawSection(cellSize, minX, minY, midX, maxY);
+            WorldImage rightHalf = 
+                    this.drawSection(cellSize, midX, minY, maxX, maxY);
+            return leftHalf.overlayImages(rightHalf);
         }
     }
 
     ///////////////////////////////////////////////////////////////////////////
     // Maze creation functions
 
-    // put all walls in maze back up
+    // EFFECT: modifies edges to put all walls in maze back up
     void wallsUp() {
         for (Edge edge: edges) {
             edge.isBlocking = true;
@@ -373,19 +476,19 @@ class Maze {
         edges.sort(new EdgeWeightComp());
     }
 
-    // Returns the bottom-right cell of this maze
+    // the bottom-right cell of this maze
     Cell getFinalCell() {
         ArrayList<Cell> lastCol = this.cells.get(this.cells.size() - 1);
         return lastCol.get(lastCol.size() - 1);
     }
 
-    // Returns the top-left cell of this maze
+    // the top-left cell of this maze
     Cell getFirstCell() {
         return this.cells.get(0).get(0);
     }
 
-    // Resets every cell in this maze to be not marked as traversed
-    // or on path
+    // EFFECT: modifies cells to resets every cell in this maze to be marked
+    // as not traversed and not on path
     void resetTraversals() {
         for (ArrayList<Cell> col: cells) {
             for (Cell cell: col) {
@@ -419,7 +522,8 @@ class UnionFindPosn {
         return samePosn(this.getGroup(p1), this.getGroup(p2));
     }
 
-    // connect the two groups containing the given Posns
+    // EFFECT: modifies map to connect the two groups
+    //   containing the given Posns
     void connect(Posn p1, Posn p2) {
         Posn group1 = this.getGroup(p1);
         Posn group2 = this.getGroup(p2);
@@ -465,7 +569,7 @@ abstract class MazeAnimator {
                 new TextImage(textLoc, this.status(), 15, Color.BLACK));
     }
 
-    // react to keystrokes from user
+    // EFFECT: unknown to react to keystrokes from user
     void onKeyEvent(String ke) {
 
     }
@@ -499,7 +603,8 @@ abstract class SolveAnimator extends MazeAnimator {
         moves = 0;
     }
 
-    // try to make the move between given cells
+    // EFFECT: modify work list and cameFromCell to try to make the move
+    //   between given cells
     void tryAddMove(Cell to, Cell from) {
         if (!to.traversed) {
             this.addWork(to);
@@ -510,8 +615,7 @@ abstract class SolveAnimator extends MazeAnimator {
     // EFFECT: add given cell to the worklist
     abstract void addWork(Cell cell);
 
-    // find direct path from end to start and mark all cells in path
-    // as being on the path
+    // EFFECT: modify cells onPath field to find direct path from end to start
     void reconstruct(Cell cell) {
         Cell curCell = cell;
         Cell prevCell = this.cameFromCell.get(curCell);
@@ -614,19 +718,18 @@ class DFSAnimator extends AutoSolveAnimator {
 
     // are there more cells to work on?
     boolean hasWork() {
-        return !this.worklist.empty();
+        return !this.worklist.isEmpty();
     }
 }
 
 //animate a breadth-first search of a maze
 class BFSAnimator extends AutoSolveAnimator {
-    // TODO: Make our own implementation of queue
-    LinkedList<Cell> worklist;
+    Queue<Cell> worklist;
 
     BFSAnimator(Maze maze) {
         super(maze);
-        this.worklist = new LinkedList<Cell>();
-        this.worklist.add(this.maze.getFirstCell());
+        this.worklist = new Queue<Cell>();
+        this.worklist.enqueue(this.maze.getFirstCell());
     }
 
     // is this animation complete?
@@ -645,19 +748,18 @@ class BFSAnimator extends AutoSolveAnimator {
                 "Completed Breadth First Search.   Moves: " + this.moves);
     }
 
-    // add given cell to the worklist
+    // EFFECT: modify worklist to add given cell
     void addWork(Cell cell) {
-        this.worklist.add(cell);
+        this.worklist.enqueue(cell);
     }
 
     // get next cell to work on
     Cell getWork() {
-        return this.worklist.remove();
+        return this.worklist.dequeue();
     }
 
     // are there more cells to work on?
     boolean hasWork() {
-        // TODO Auto-generated method stub
         return !this.worklist.isEmpty();
     }
 }
@@ -678,28 +780,30 @@ class PlayAnimator extends SolveAnimator {
         // do nothing since only operates on keypresses
     }
 
+    // EFFECT: modify this Animator's fields to react to keystrokes
     void onKeyEvent(String ke) {
         if (!this.isComplete()) {
+            // move left
             if (ke == "left" && !this.head.left.isBlocking) {
                 tryAddMove(this.head.left.cell1, this.head);
                 moves += 1;
             }
+            // move left
             if (ke == "up" && !this.head.top.isBlocking) {
                 tryAddMove(this.head.top.cell1, this.head);
                 moves += 1;
             }
+            // move left
             if (ke == "right" && !this.head.right.isBlocking) {
                 tryAddMove(this.head.right.cell2, this.head);
                 moves += 1;
             }
+            // move left
             if (ke == "down" && !this.head.bot.isBlocking) {
                 tryAddMove(this.head.bot.cell2, this.head);
                 moves += 1;
             }
-            if (this.head == this.maze.getFinalCell()) {
-                this.completed = true;
-                this.reconstruct(head);
-            }
+            
         }
     }
 
@@ -719,15 +823,25 @@ class PlayAnimator extends SolveAnimator {
                 "Puzzle Complete!   Moves: " + this.moves);
     }
 
+    // EFFECT: modify this animator and from and to Cells to move player
+    //   between given cells
     void tryAddMove(Cell to, Cell from) {
         super.tryAddMove(to, from);
+        
+        
         to.onPath = true;
         to.traversed = true;
         from.onPath = false;
         this.head = to;
+
+        // check to see if this keystroke completed maze
+        if (this.head == this.maze.getFinalCell()) {
+            this.completed = true;
+            this.reconstruct(head);
+        }
     }
 
-    // add given cell to the worklist
+    // EFFECT: modify worklist to add given cell
     void addWork(Cell cell) {
         // DO NOTHING since no worklist
     }
@@ -770,11 +884,13 @@ class IdleAnimator extends MazeAnimator {
 class MsgAnimator extends IdleAnimator {
     String msg;
 
+    // Construct a message animator displaying given message
     MsgAnimator(Maze maze, String msg) {
         super(maze);
         this.msg = msg;
     }
 
+    // get the status text of this animation
     String status() {
         return msg;
     }
@@ -782,9 +898,13 @@ class MsgAnimator extends IdleAnimator {
 
 // animate Kruskal generation of a maze
 class KruskalAnimator extends MazeAnimator {
+    // union find structure, representing Cells as Posns of their location
     UnionFindPosn uFind;
+    // number of edges used in current tree
     int edgesUsed;
+    // number of edges for a spanning tree
     int edgesNeeded;
+    // index of edge about to be checked
     int currEdge;
 
     KruskalAnimator(Maze maze, int width, int height) {
@@ -812,6 +932,7 @@ class KruskalAnimator extends MazeAnimator {
                 cell2Posn = new Posn(nextEdge.cell2.x, nextEdge.cell2.y);
                 currEdge += 1;
             }
+            
             nextEdge.isBlocking = false;
             this.edgesUsed += 1;
             this.uFind.connect(cell1Posn, cell2Posn);
@@ -898,7 +1019,7 @@ class MazeWorld extends World {
         initialize(width, height, cellSize, label);
     }
 
-    // initialize this world
+    // EFFECT: assign all fields to generate a fresh maze
     void initialize(int width, int height, int cellSize, String label) {
         this.width = width;
         this.height = height;
@@ -907,6 +1028,7 @@ class MazeWorld extends World {
         this.animator = new MsgAnimator(maze, label);
     }
 
+    // creates an image of this maze world
     public WorldImage makeImage() {
         int pWidth = this.getPixelWidth();
         int pHeight = this.getPixelHeight();
@@ -917,15 +1039,16 @@ class MazeWorld extends World {
         return this.animator.drawOnto(this.cellSize, bg);
     }
 
-    // update the world on each tick
+    // EFFECT: update the world on each tick
     public void onTick() {
+        // delegates onTick to animators
         if (this.animator.isComplete()) {
             this.animator = animator.nextAnimator();
         }
         this.animator.onTick();
     }
 
-    // handle user key presses
+    // EFFECT: handle user key presses
     public void onKeyEvent(String ke) {
         // assign random weights
         if (ke.equals("r")) {
@@ -982,15 +1105,16 @@ class MazeWorld extends World {
             initialize(200, 120, 5, "Gigantic Maze");
         }
 
+        // allow animators to react to keys
         animator.onKeyEvent(ke);
     }
 
-    // return the width of the maze in pixels 
+    // the width of the maze in pixels 
     int getPixelWidth() {
         return this.width * this.cellSize;
     }
 
-    // return the height of the maze in pixels 
+    // the height of the maze in pixels 
     int getPixelHeight() {
         return this.height * this.cellSize + 25;
     }
@@ -1005,6 +1129,239 @@ class ExamplesMaze {
 
         initWorld.bigBang(initWorld.getPixelWidth(),
                 initWorld.getPixelHeight(),
-                0.1);
+                0.04);
+    }
+    
+    // stack push pop size isEmpty
+    
+    /**** Tests for Stack ****/
+    
+    Stack<Integer> stack;
+    
+    // initialize stack
+    void initializeStack() {
+        stack = new Stack<Integer>();
+    }
+    
+    // test push method on Stack
+    void testPush(Tester t) {
+        initializeStack();
+        
+        stack.push(3);
+        stack.push(12);
+        stack.push(9);
+
+        t.checkExpect(stack.stack.get(0), 3);
+        t.checkExpect(stack.stack.get(1), 12);
+        t.checkExpect(stack.stack.get(2), 9);
+    }
+    
+    // test pop method on Stack
+    void testPopStack(Tester t) {
+        initializeStack();
+
+        stack.stack = new ArrayList<Integer>(Arrays.asList(3, 7, 8, 2));
+
+        t.checkExpect(stack.pop(), 2);
+        t.checkExpect(stack.pop(), 8);
+        t.checkExpect(stack.pop(), 7);
+        t.checkExpect(stack.pop(), 3);
+    }
+    
+    // test push and pop methods on Stack together to be sure they work
+    void testPushPopStack(Tester t) {
+        initializeStack();
+        
+        stack.push(1);
+        stack.push(2);
+        stack.push(3);
+        
+        t.checkExpect(stack.pop(), 3);
+        t.checkExpect(stack.pop(), 2);
+        
+        stack.push(4);
+        
+        t.checkExpect(stack.pop(), 4);
+        t.checkExpect(stack.pop(), 1);
+    }
+    
+    // test size method on Stack
+    void testSizeStack(Tester t) {
+        initializeStack();
+
+        t.checkExpect(stack.size(), 0);
+        stack.push(1);
+        t.checkExpect(stack.size(), 1);
+        stack.push(1);
+        t.checkExpect(stack.size(), 2);
+        stack.push(1);
+        t.checkExpect(stack.size(), 3);
+        
+        stack.pop();
+        t.checkExpect(stack.size(), 2);
+        
+        stack.push(1);
+        t.checkExpect(stack.size(), 3);
+        
+        stack.pop();
+        t.checkExpect(stack.size(), 2);
+        stack.pop();
+        t.checkExpect(stack.size(), 1);
+        stack.pop();
+        t.checkExpect(stack.size(), 0);
+        
+        for(int i = 0; i < 1000; i++) {
+            stack.push(1);
+        }
+        t.checkExpect(stack.size(), 1000);
+    }
+    
+    // test isEmpty method on Stack
+    void testIsEmptyStack(Tester t) {
+        initializeStack();
+
+        t.checkExpect(stack.isEmpty(), true);
+        stack.push(1);
+        stack.push(1);
+        stack.push(1);
+        stack.push(1);
+        t.checkExpect(stack.isEmpty(), false);
+        stack.pop();
+        stack.pop();
+        t.checkExpect(stack.isEmpty(), false);
+        stack.pop();
+        stack.pop();
+        t.checkExpect(stack.isEmpty(), true);
+    }
+
+    /**** Tests for Queue ****/
+    
+    Queue<Integer> queue;
+    
+    // initialize queue
+    void initializeQueue() {
+        queue = new Queue<Integer>();
+    }
+    
+    // test enqueue method on Queue
+    void testEnqueueQueue(Tester t) {
+        initializeQueue();
+        
+        queue.enqueue(3);
+        t.checkExpect(queue.queue.get(0), 3);
+
+        queue.enqueue(5);
+        queue.enqueue(7);
+        queue.enqueue(12);
+        t.checkExpect(queue.queue.get(0), 3);
+        t.checkExpect(queue.queue.get(1), 5);
+        t.checkExpect(queue.queue.get(2), 7);
+        t.checkExpect(queue.queue.get(3), 12);
+    }
+    
+    // test enqueue and dequeue together on Queue
+    void testEnqueueDequeueQueue(Tester t) {
+        initializeQueue();
+        
+        queue.enqueue(1);
+        t.checkExpect(queue.dequeue(), 1);
+
+        queue.enqueue(2);
+        queue.enqueue(3);
+        queue.enqueue(4);
+        t.checkExpect(queue.dequeue(), 2);
+        t.checkExpect(queue.dequeue(), 3);
+
+        queue.enqueue(5);
+        t.checkExpect(queue.dequeue(), 4);
+        t.checkExpect(queue.dequeue(), 5);
+        
+        initializeQueue();
+
+        // test large number of items and if/where it fails
+        int testSize = 1000;
+        for(int i = 0; i < testSize; i += 1) {
+            queue.enqueue(i);
+        }
+        
+        boolean pass = true;
+        int firstFail = -1;
+        for (int i = 0; i < testSize; i += 1) {
+            if (pass && queue.dequeue() != i) {
+                pass = false;
+                firstFail = i;
+            }
+        }
+        
+        t.checkExpect(firstFail, -1);
+    }
+    
+    // test size method on Queue
+    void testSizeQueue(Tester t) {
+        initializeQueue();
+
+        t.checkExpect(queue.size(), 0);
+        queue.enqueue(1);
+        t.checkExpect(queue.size(), 1);
+        queue.enqueue(1);
+        t.checkExpect(queue.size(), 2);
+        queue.enqueue(1);
+        t.checkExpect(queue.size(), 3);
+        
+        queue.dequeue();
+        t.checkExpect(queue.size(), 2);
+        
+        queue.enqueue(1);
+        t.checkExpect(queue.size(), 3);
+        
+        queue.dequeue();
+        t.checkExpect(queue.size(), 2);
+        queue.dequeue();
+        t.checkExpect(queue.size(), 1);
+        queue.dequeue();
+        t.checkExpect(queue.size(), 0);
+        
+        for(int i = 0; i < 1000; i++) {
+            queue.enqueue(1);
+        }
+        t.checkExpect(queue.size(), 1000);
+    }
+    
+    // test isEmpty method on Stack
+    void testIsEmptyQueue(Tester t) {
+        initializeQueue();
+
+        t.checkExpect(queue.isEmpty(), true);
+        queue.enqueue(1);
+        queue.enqueue(1);
+        queue.enqueue(1);
+        queue.enqueue(1);
+        t.checkExpect(queue.isEmpty(), false);
+        queue.dequeue();
+        queue.dequeue();
+        t.checkExpect(queue.isEmpty(), false);
+        queue.dequeue();
+        queue.dequeue();
+        t.checkExpect(queue.isEmpty(), true);
+    }
+    
+    // test reset method on Stack
+    void testResetQueue(Tester t) {
+        initializeQueue();
+
+        queue.enqueue(1);
+        queue.enqueue(2);
+        queue.enqueue(3);
+        queue.enqueue(4);
+        queue.enqueue(5);
+        queue.dequeue();
+        queue.dequeue();
+        
+        queue.reset();
+        t.checkExpect(queue.head, 0);
+        t.checkExpect(queue.size(), queue.queue.size());
+        t.checkExpect(queue.dequeue(), 3);
+        t.checkExpect(queue.dequeue(), 4);
+        t.checkExpect(queue.dequeue(), 5);
     }
 }
