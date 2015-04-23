@@ -1,6 +1,7 @@
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Random;
@@ -24,26 +25,26 @@ import tester.*;
 class Stack<T> {
     // stores all items in the stack, with the last item being the top
     ArrayList<T> stack;
-    
+
     Stack() {
         this.stack = new ArrayList<T>();
     }
-    
+
     // EFFECT: add an element to the end of stack
     void push(T item) {
         stack.add(item);
     }
-    
+
     // EFFECT: remove the last element of stack, and return it
     T pop() {
         return this.stack.remove(stack.size() - 1);
     }
-    
+
     // the size of this stack
     int size() {
         return stack.size();
     }
-    
+
     // is this stack empty?
     boolean isEmpty() {
         return this.size() == 0;
@@ -56,51 +57,51 @@ class Queue<T> {
     int head; 
     // stores all items in the queue with given head and last item at the end
     ArrayList<T> queue;
-    
+
     Queue() {
         this.head = 0;
         this.queue = new ArrayList<T>();
     }
-    
+
     // EFFECT: adds given item to the end of the queue
     void enqueue(T item) {
         this.queue.add(item);
     }
-    
+
     // EFFECT: gets item at head, increments head, then returns item
     T dequeue() {
         T item = this.queue.get(head);
         head += 1;
-        
+
         // if the extra space at the front is too wasteful, reset
         if (head > 20 && this.head > this.queue.size() / 3) {
             this.reset();
         }
-        
+
         return item;
     }
-    
+
     // the size of this queue
     int size() {
         return this.queue.size() - this.head;
     }
-    
+
     // is this queue empty?
     boolean isEmpty() {
         return this.size() == 0;
     }
-    
+
     // EFFECT: creates a new ArrayList with all items in queue and head = 0
     void reset() {
         ArrayList<T> newQueue = new ArrayList<T>(this.size());
-        
+
         // add all items to the new list
-        while(!this.isEmpty()) {
+        while (!this.isEmpty()) {
             // dequeue code without if block
             newQueue.add(this.queue.get(head));
             head += 1;
         }
-        
+
         this.queue = newQueue;
         this.head = 0;
     }
@@ -170,8 +171,8 @@ class Cell {
             return new Color(250, 70, 70);
         }
         else if (this.traversed) {
-            return new Color(150, 150, 220);	        
-        } 
+            return new Color(150, 150, 220);
+        }
         else {
             // Hue 282
             return new Color(203, 188, 227);
@@ -204,7 +205,7 @@ abstract class Edge {
     // create a picture of this edge if on screen
     WorldImage draw(int cellSize) {
         // non-existant walls draw off screen (for lack of dummy image type)
-        if(!isBlocking) {
+        if (!isBlocking) {
             return new RectangleImage(new Posn(-1, -1), 0, 0, Color.BLACK);
         }
 
@@ -270,7 +271,7 @@ class BorderEdge extends Edge {
     // returns the image of this edge
     WorldImage getImage(int cellSize) {
         // an image off the canvas for lack of a dummy Image
-        return new RectangleImage(new Posn (-1, -1), 0, 0, Color.GRAY);
+        return new RectangleImage(new Posn(-1, -1), 0, 0, Color.GRAY);
     }
 }
 
@@ -468,7 +469,7 @@ class Maze {
         for (Edge edge: edges) {
             edge.weight = rand.nextDouble();
         }
-        edges.sort(new EdgeWeightComp());
+        Collections.sort(edges, new EdgeWeightComp());
     }
 
     // the bottom-right cell of this maze
@@ -534,7 +535,7 @@ class UnionFindPosn {
     Posn getGroup(Posn p) {
         Posn curr = p;
         Posn next = this.map.get(curr.x).get(curr.y);
-        while(!this.samePosn(curr, next)) {
+        while (!this.samePosn(curr, next)) {
             curr = next;
             next = this.map.get(curr.x).get(curr.y);
         }
@@ -566,7 +567,8 @@ abstract class MazeAnimator {
 
     // EFFECT: unknown to react to keystrokes from user
     void onKeyEvent(String ke) {
-
+        // DO NOTHING: most animators don't need to react to keystrokes; those
+        //   that do can override this method
     }
 
     // does this animator guarantee termination?
@@ -779,26 +781,26 @@ class PlayAnimator extends SolveAnimator {
     void onKeyEvent(String ke) {
         if (!this.isComplete()) {
             // move left
-            if (ke == "left" && !this.head.left.isBlocking) {
+            if (ke.equals("left") && !this.head.left.isBlocking) {
                 tryAddMove(this.head.left.cell1, this.head);
                 moves += 1;
             }
             // move left
-            if (ke == "up" && !this.head.top.isBlocking) {
+            if (ke.equals("up") && !this.head.top.isBlocking) {
                 tryAddMove(this.head.top.cell1, this.head);
                 moves += 1;
             }
             // move left
-            if (ke == "right" && !this.head.right.isBlocking) {
+            if (ke.equals("right") && !this.head.right.isBlocking) {
                 tryAddMove(this.head.right.cell2, this.head);
                 moves += 1;
             }
             // move left
-            if (ke == "down" && !this.head.bot.isBlocking) {
+            if (ke.equals("down") && !this.head.bot.isBlocking) {
                 tryAddMove(this.head.bot.cell2, this.head);
                 moves += 1;
             }
-            
+
         }
     }
 
@@ -822,8 +824,8 @@ class PlayAnimator extends SolveAnimator {
     //   between given cells
     void tryAddMove(Cell to, Cell from) {
         super.tryAddMove(to, from);
-        
-        
+
+
         to.onPath = true;
         to.traversed = true;
         from.onPath = false;
@@ -856,7 +858,7 @@ class IdleAnimator extends MazeAnimator {
 
     // EFFECT: update this Animator's fields to progress one step
     void onTick() {
-
+        // DO NOTHING: animator is idle
     }
 
     // is this animation complete?
@@ -927,7 +929,7 @@ class KruskalAnimator extends MazeAnimator {
                 cell2Posn = new Posn(nextEdge.cell2.x, nextEdge.cell2.y);
                 currEdge += 1;
             }
-            
+
             nextEdge.isBlocking = false;
             this.edgesUsed += 1;
             this.uFind.connect(cell1Posn, cell2Posn);
@@ -961,8 +963,8 @@ class InstantAnimator extends MazeAnimator {
 
     // instantly complete animation
     void onTick() {
-        if(this.anim.alwaysTerminates()) {
-            while(!this.anim.isComplete()) {
+        if (this.anim.alwaysTerminates()) {
+            while (!this.anim.isComplete()) {
                 this.anim.onTick();
             }
         }
@@ -1126,23 +1128,23 @@ class ExamplesMaze {
                 initWorld.getPixelHeight(),
                 0.04);
     }
-    
+
     // stack push pop size isEmpty
     /***************************************
      * Tests for Stack
      ***************************************/
-    
+
     Stack<Integer> stack;
-    
+
     // initialize stack
     void initializeStack() {
         stack = new Stack<Integer>();
     }
-    
+
     // test push method on Stack
     void testPush(Tester t) {
         initializeStack();
-        
+
         stack.push(3);
         stack.push(12);
         stack.push(9);
@@ -1151,7 +1153,7 @@ class ExamplesMaze {
         t.checkExpect(stack.stack.get(1), 12);
         t.checkExpect(stack.stack.get(2), 9);
     }
-    
+
     // test pop method on Stack
     void testPopStack(Tester t) {
         initializeStack();
@@ -1163,24 +1165,24 @@ class ExamplesMaze {
         t.checkExpect(stack.pop(), 7);
         t.checkExpect(stack.pop(), 3);
     }
-    
+
     // test push and pop methods on Stack together to be sure they work
     void testPushPopStack(Tester t) {
         initializeStack();
-        
+
         stack.push(1);
         stack.push(2);
         stack.push(3);
-        
+
         t.checkExpect(stack.pop(), 3);
         t.checkExpect(stack.pop(), 2);
-        
+
         stack.push(4);
-        
+
         t.checkExpect(stack.pop(), 4);
         t.checkExpect(stack.pop(), 1);
     }
-    
+
     // test size method on Stack
     void testSizeStack(Tester t) {
         initializeStack();
@@ -1192,26 +1194,26 @@ class ExamplesMaze {
         t.checkExpect(stack.size(), 2);
         stack.push(1);
         t.checkExpect(stack.size(), 3);
-        
+
         stack.pop();
         t.checkExpect(stack.size(), 2);
-        
+
         stack.push(1);
         t.checkExpect(stack.size(), 3);
-        
+
         stack.pop();
         t.checkExpect(stack.size(), 2);
         stack.pop();
         t.checkExpect(stack.size(), 1);
         stack.pop();
         t.checkExpect(stack.size(), 0);
-        
-        for(int i = 0; i < 1000; i++) {
+
+        for (int i = 0; i < 1000; i++) {
             stack.push(1);
         }
         t.checkExpect(stack.size(), 1000);
     }
-    
+
     // test isEmpty method on Stack
     void testIsEmptyStack(Tester t) {
         initializeStack();
@@ -1233,18 +1235,18 @@ class ExamplesMaze {
     /***************************************
      * Tests for Queue
      ***************************************/
-    
+
     Queue<Integer> queue;
-    
+
     // initialize queue
     void initializeQueue() {
         queue = new Queue<Integer>();
     }
-    
+
     // test enqueue method on Queue
     void testEnqueueQueue(Tester t) {
         initializeQueue();
-        
+
         queue.enqueue(3);
         t.checkExpect(queue.queue.get(0), 3);
 
@@ -1256,11 +1258,11 @@ class ExamplesMaze {
         t.checkExpect(queue.queue.get(2), 7);
         t.checkExpect(queue.queue.get(3), 12);
     }
-    
+
     // test enqueue and dequeue together on Queue
     void testEnqueueDequeueQueue(Tester t) {
         initializeQueue();
-        
+
         queue.enqueue(1);
         t.checkExpect(queue.dequeue(), 1);
 
@@ -1273,15 +1275,15 @@ class ExamplesMaze {
         queue.enqueue(5);
         t.checkExpect(queue.dequeue(), 4);
         t.checkExpect(queue.dequeue(), 5);
-        
+
         initializeQueue();
 
         // test large number of items and if/where it fails
         int testSize = 1000;
-        for(int i = 0; i < testSize; i += 1) {
+        for (int i = 0; i < testSize; i += 1) {
             queue.enqueue(i);
         }
-        
+
         boolean pass = true;
         int firstFail = -1;
         for (int i = 0; i < testSize; i += 1) {
@@ -1290,10 +1292,10 @@ class ExamplesMaze {
                 firstFail = i;
             }
         }
-        
+
         t.checkExpect(firstFail, -1);
     }
-    
+
     // test size method on Queue
     void testSizeQueue(Tester t) {
         initializeQueue();
@@ -1305,26 +1307,26 @@ class ExamplesMaze {
         t.checkExpect(queue.size(), 2);
         queue.enqueue(1);
         t.checkExpect(queue.size(), 3);
-        
+
         queue.dequeue();
         t.checkExpect(queue.size(), 2);
-        
+
         queue.enqueue(1);
         t.checkExpect(queue.size(), 3);
-        
+
         queue.dequeue();
         t.checkExpect(queue.size(), 2);
         queue.dequeue();
         t.checkExpect(queue.size(), 1);
         queue.dequeue();
         t.checkExpect(queue.size(), 0);
-        
-        for(int i = 0; i < 1000; i++) {
+
+        for (int i = 0; i < 1000; i++) {
             queue.enqueue(1);
         }
         t.checkExpect(queue.size(), 1000);
     }
-    
+
     // test isEmpty method on Stack
     void testIsEmptyQueue(Tester t) {
         initializeQueue();
@@ -1342,7 +1344,7 @@ class ExamplesMaze {
         queue.dequeue();
         t.checkExpect(queue.isEmpty(), true);
     }
-    
+
     // test reset method on Stack
     void testResetQueue(Tester t) {
         initializeQueue();
@@ -1354,7 +1356,7 @@ class ExamplesMaze {
         queue.enqueue(5);
         queue.dequeue();
         queue.dequeue();
-        
+
         queue.reset();
         t.checkExpect(queue.head, 0);
         t.checkExpect(queue.size(), queue.queue.size());
@@ -1362,8 +1364,8 @@ class ExamplesMaze {
         t.checkExpect(queue.dequeue(), 4);
         t.checkExpect(queue.dequeue(), 5);
     }
-    
-    
+
+
     /***************************************
      * Tests for Cell and Edge
      ***************************************/
@@ -1376,7 +1378,7 @@ class ExamplesMaze {
     Cell cell20;
     Cell cell21;
     Cell cell22;
-    
+
     Edge lrEdge00;
     Edge lrEdge01;
     Edge lrEdge02;
@@ -1389,7 +1391,7 @@ class ExamplesMaze {
     Edge lrEdge30;
     Edge lrEdge31;
     Edge lrEdge32;
-    
+
     Edge tbEdge00;
     Edge tbEdge01;
     Edge tbEdge02;
@@ -1402,7 +1404,7 @@ class ExamplesMaze {
     Edge tbEdge21;
     Edge tbEdge22;
     Edge tbEdge23;
-    
+
     // Initialize cells
     void initCells() {
         cell00 = new Cell(0, 0);
@@ -1415,7 +1417,7 @@ class ExamplesMaze {
         cell21 = new Cell(2, 1);
         cell22 = new Cell(2, 2);
     }
-    
+
     // Initialize edges, connected to cells
     void initEdges() {
         lrEdge00 = new LREdge(cell00, cell00, true, 0);
@@ -1430,7 +1432,7 @@ class ExamplesMaze {
         lrEdge30 = new LREdge(cell20, cell20, true, 0);
         lrEdge31 = new LREdge(cell21, cell21, true, 0);
         lrEdge32 = new LREdge(cell22, cell22, true, 0);
-        
+
         tbEdge00 = new TBEdge(cell00, cell00, true, 0);
         tbEdge01 = new TBEdge(cell00, cell01, true, 0);
         tbEdge02 = new TBEdge(cell01, cell02, true, 0);
@@ -1444,7 +1446,7 @@ class ExamplesMaze {
         tbEdge22 = new TBEdge(cell21, cell22, true, 0);
         tbEdge23 = new TBEdge(cell22, cell22, true, 0);
     }
-    
+
     // Connect cells to edges
     void connectCells() {
         cell00.left = lrEdge00;
@@ -1466,7 +1468,7 @@ class ExamplesMaze {
         cell20.right = lrEdge30;
         cell21.right = lrEdge31;
         cell22.right = lrEdge32;
-        
+
         cell00.top = tbEdge00;
         cell01.top = tbEdge01;
         cell02.top = tbEdge02;
@@ -1476,7 +1478,7 @@ class ExamplesMaze {
         cell20.top = tbEdge20;
         cell21.top = tbEdge21;
         cell22.top = tbEdge22;
-        
+
         cell00.bot = tbEdge01;
         cell01.bot = tbEdge02;
         cell02.bot = tbEdge03;
@@ -1487,7 +1489,7 @@ class ExamplesMaze {
         cell21.bot = tbEdge22;
         cell22.bot = tbEdge23;
     }
-    
+
     // Change whether certain cells are traversed or onPath
     void initCellStatus() {
         cell00.traversed = true;
@@ -1497,15 +1499,15 @@ class ExamplesMaze {
         cell21.traversed = true;
         cell21.onPath = true;
     }
-    
+
     // Tests for the getColor method on Cell
     void testGetColorCell(Tester t) {
         initCells();
-        
+
         Color untraversed = new Color(203, 188, 227);
         Color traversed = new Color(150, 150, 220);
         Color onPath = new Color(250, 70, 70);
-        
+
         t.checkExpect(cell00.getColor(), untraversed);
         t.checkExpect(cell01.getColor(), untraversed);
         t.checkExpect(cell02.getColor(), untraversed);
@@ -1527,9 +1529,9 @@ class ExamplesMaze {
         t.checkExpect(cell20.getColor(), onPath);
         t.checkExpect(cell21.getColor(), onPath);
         t.checkExpect(cell22.getColor(), untraversed);
-        
+
     }
-    
+
     // Tests for the draw method on Cell
     void testDrawCell(Tester t) {
         initCells();
@@ -1546,7 +1548,7 @@ class ExamplesMaze {
         cells.add(cell20);
         cells.add(cell21);
         cells.add(cell22);
-        
+
         for (Cell curCell: cells) {
             Posn center = new Posn(curCell.x * 10 + 5, curCell.y * 10 + 5);
 
@@ -1557,14 +1559,14 @@ class ExamplesMaze {
             WorldImage topEdgeImage = curCell.top.draw(10);
             WorldImage rightEdgeImage = curCell.right.draw(10);
             WorldImage botEdgeImage = curCell.bot.draw(10);
-            
+
             WorldImage finalImage = cellImage.overlayImages(
                     leftEdgeImage, topEdgeImage, rightEdgeImage, botEdgeImage);
-            
+
             t.checkExpect(curCell.draw(10), finalImage);
         }
     }
-    
+
     // Tests for the draw method on Edge
     // Note: also tests getImage in testing draw
     void testDrawEdge(Tester t) {
@@ -1585,7 +1587,7 @@ class ExamplesMaze {
                 new RectangleImage(new Posn(30, 0), 20, 3, Edge.COLOR));
         t.checkExpect(tbEdge21.draw(20),
                 new RectangleImage(new Posn(50, 20), 20, 3, Edge.COLOR));
-        
+
         lrEdge00.isBlocking = false;
         lrEdge00.isBlocking = false;
         lrEdge10.isBlocking = false;
@@ -1594,7 +1596,7 @@ class ExamplesMaze {
         tbEdge00.isBlocking = false;
         tbEdge10.isBlocking = false;
         tbEdge21.isBlocking = false;
-        
+
         t.checkExpect(lrEdge00.draw(10),
                 new RectangleImage(new Posn(-1, -1), 0, 0, Color.BLACK));
         t.checkExpect(lrEdge00.draw(0),
@@ -1612,11 +1614,11 @@ class ExamplesMaze {
         t.checkExpect(tbEdge21.draw(20),
                 new RectangleImage(new Posn(-1, -1), 0, 0, Color.BLACK));
     }
-    
+
     /***************************************
      * Tests for Maze
      ***************************************/
-    
+
     /***************************************
      * Tests for AutoSolveAnimator (DFS and BFS)
      ***************************************/
@@ -1624,25 +1626,25 @@ class ExamplesMaze {
     /***************************************
      * Tests for PlayAnimator
      ***************************************/
-    
+
     /***************************************
      * Tests for IdleAnimator
      ***************************************/
-    
+
     /***************************************
      * Tests for MsgAnimator
      ***************************************/
-    
+
     /***************************************
      * Tests for KruskalAnimator
      ***************************************/
-    
+
     /***************************************
      * Tests for InstantAnimator
      ***************************************/
-    
+
     /***************************************
      * Tests for MazeWorld
      ***************************************/
-    
+
 }
