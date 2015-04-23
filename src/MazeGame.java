@@ -1972,10 +1972,15 @@ class ExamplesMaze {
     /***************************************
      * Tests for AutoSolveAnimator (DFS and BFS)
      ***************************************/
+    
+    DFSAnimator dfs;
+    BFSAnimator bfs;
 
     /***************************************
      * Tests for PlayAnimator
      ***************************************/
+    
+    PlayAnimator play;
 
     /***************************************
      * Tests for IdleAnimator
@@ -1990,7 +1995,7 @@ class ExamplesMaze {
     }
     
     // test Idle Animator
-    void testIdle(Tester t) {
+    void testIdleAnimator(Tester t) {
         initIdle();
         
         t.checkExpect(idle.status(), "Idle");
@@ -2007,7 +2012,24 @@ class ExamplesMaze {
      * Tests for MsgAnimator
      ***************************************/
     
+    MsgAnimator msg;
     
+    // NOTE: only status method needs to be tested since rest inherited from
+    // IdleAnimator
+    
+    // test status method on  MsgAnimator
+    void testStatusMsgAnimator(Tester t) {
+        initMaze(3, 3);
+        
+        msg = new MsgAnimator(maze1, "hello");
+        t.checkExpect(msg.status(), "hello");
+        
+        msg = new MsgAnimator(maze1, "goodbye");
+        t.checkExpect(msg.status(), "goodbye");
+        
+        msg = new MsgAnimator(maze1, "Help me I'm trapped in here!");
+        t.checkExpect(msg.status(), "Help me I'm trapped in here!");
+    }
 
     /***************************************
      * Tests for KruskalAnimator
@@ -2039,7 +2061,7 @@ class ExamplesMaze {
     
     // test Kruskal algorithm on the maze (onTick, status, isComplete and
     // nextAnimator teted)
-    void testKruskal(Tester t) {
+    void testKruskalAnimator(Tester t) {
         initKruskal();
         
         kruskal.onTick();
@@ -2079,9 +2101,68 @@ class ExamplesMaze {
     /***************************************
      * Tests for InstantAnimator
      ***************************************/
+    
+    InstantAnimator inst;
+    
+    // test InstantAnimator class
+    void testInstantAnimator(Tester t) {
+        initMaze(3, 3);
+        
+        idle = new IdleAnimator(maze1);
+        inst = new InstantAnimator(maze1, idle);
+        
+        t.checkExpect(inst.status(), "Completing Animation");
+        
+        inst.onTick();
+        t.checkExpect(inst.isComplete(), true);
+        t.checkExpect(inst.nextAnimator(), idle.nextAnimator());
+        t.checkExpect(inst.status(), "Completing Animation");
+        
+        msg = new MsgAnimator(maze1, "hello");
+        inst = new InstantAnimator(maze1, msg);
+        
+        t.checkExpect(inst.status(), "Completing Animation");
+        
+        inst.onTick();
+        t.checkExpect(inst.isComplete(), true);
+        t.checkExpect(inst.nextAnimator(), msg.nextAnimator());
+        t.checkExpect(inst.status(), "Completing Animation");
+        
+        kruskal = new KruskalAnimator(maze1);
+        inst = new InstantAnimator(maze1, kruskal);
+        
+        t.checkExpect(inst.status(), "Completing Animation");
+        
+        inst.onTick();
+        t.checkExpect(inst.isComplete(), true);
+        t.checkExpect(inst.nextAnimator(), kruskal.nextAnimator());
+        t.checkExpect(inst.status(), "Completing Animation");
+        
+        // Player animator has more specific reactions
+        
+        play = new PlayAnimator(maze1);
+        inst = new InstantAnimator(maze1, play);
+        
+        t.checkExpect(inst.status(), "Completing Animation");
+
+        // this should all be true even before onTick is called
+        t.checkExpect(inst.isComplete(), true);
+        t.checkExpect(inst.nextAnimator(), play);
+        
+        // and onTick shouldn't break
+        inst.onTick();
+        
+        // just to be sure
+        t.checkExpect(inst.isComplete(), true);
+        t.checkExpect(inst.nextAnimator(), play);
+        t.checkExpect(inst.status(), "Completing Animation");
+    }
 
     /***************************************
      * Tests for MazeWorld
      ***************************************/
+    
+    // the maze world class is too high level and dependent on both random and
+    // input factors to be practically tested
 
 }
