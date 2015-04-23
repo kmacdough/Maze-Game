@@ -904,9 +904,12 @@ class KruskalAnimator extends MazeAnimator {
     // index of edge about to be checked
     int currEdge;
 
-    KruskalAnimator(Maze maze, int width, int height) {
+    KruskalAnimator(Maze maze) {
         super(maze);
         this.maze.wallsUp();
+        
+        int width = maze.width;
+        int height = maze.height;
 
         uFind = new UnionFindPosn(width, height);
         edgesUsed = 0;
@@ -1059,7 +1062,7 @@ class MazeWorld extends World {
         else if (ke.equals("g")) {
             this.maze.resetTraversals();
             this.animator =
-                    new KruskalAnimator(this.maze, this.width, this.height);
+                    new KruskalAnimator(this.maze);
         }     
         // begin depth-first search
         else if (ke.equals("d")) {
@@ -1957,6 +1960,16 @@ class ExamplesMaze {
     }
 
     /***************************************
+     * Tests for MazeAnimator
+     ***************************************/
+    
+    /*
+     * Since the only methods actually defined on this abstract class are
+     * drawOnto (hard to test), onKeYyEvent (does nothing) and alwaysTerminates
+     * (default returns true), there is nothing reasonable to test here
+     */
+
+    /***************************************
      * Tests for AutoSolveAnimator (DFS and BFS)
      ***************************************/
 
@@ -1967,14 +1980,101 @@ class ExamplesMaze {
     /***************************************
      * Tests for IdleAnimator
      ***************************************/
+    
+    IdleAnimator idle;
+    
+    // initialize Idle Animator
+    void initIdle() {
+        initMaze(3, 3);
+        idle = new IdleAnimator(maze1);
+    }
+    
+    // test Idle Animator
+    void testIdle(Tester t) {
+        initIdle();
+        
+        t.checkExpect(idle.status(), "Idle");
+        t.checkExpect(idle.isComplete(), true);
+        t.checkExpect(idle.nextAnimator(), idle);
+        
+        idle.onTick();
+        // check that the maze hasn't deviated from maze2 which is initially
+        // constructed identically
+        t.checkExpect(idle.maze, maze2);
+    }
 
     /***************************************
      * Tests for MsgAnimator
      ***************************************/
+    
+    
 
     /***************************************
      * Tests for KruskalAnimator
      ***************************************/
+    
+    KruskalAnimator kruskal;
+    
+    // initialize Kruskal Animator
+    void initKruskal() {
+        initMaze(3, 2);
+        /*
+         * Weight assignments
+         * +---+---+---+
+         * |   4   5   |
+         * +-1-+-3-+-6-+
+         * |   2   7   |
+         * +---+---+---+
+         */
+        maze1.cells.get(0).get(0).right.weight = 4;
+        maze1.cells.get(1).get(0).right.weight = 5;
+        maze1.cells.get(0).get(1).right.weight = 2;
+        maze1.cells.get(1).get(1).right.weight = 7;
+        maze1.cells.get(0).get(0).bot.weight = 1;
+        maze1.cells.get(1).get(0).bot.weight = 3;
+        maze1.cells.get(2).get(0).bot.weight = 6;
+        Collections.sort(maze1.edges, new EdgeWeightComp());
+        kruskal = new KruskalAnimator(maze1);
+    }
+    
+    // test Kruskal algorithm on the maze (onTick, status, isComplete and
+    // nextAnimator teted)
+    void testKruskal(Tester t) {
+        initKruskal();
+        
+        kruskal.onTick();
+        t.checkExpect(maze1.cells.get(0).get(0).bot.isBlocking, false);
+        t.checkExpect(kruskal.status(), "Generating maze: 1/5");
+        kruskal.onTick();
+        t.checkExpect(maze1.cells.get(0).get(1).right.isBlocking, false);
+        t.checkExpect(kruskal.status(), "Generating maze: 2/5");
+        kruskal.onTick();
+        t.checkExpect(maze1.cells.get(1).get(0).bot.isBlocking, false);
+        t.checkExpect(kruskal.status(), "Generating maze: 3/5");
+        kruskal.onTick();
+        t.checkExpect(maze1.cells.get(1).get(0).right.isBlocking, false);
+        t.checkExpect(kruskal.status(), "Generating maze: 4/5");
+        kruskal.onTick();
+        t.checkExpect(maze1.cells.get(2).get(0).bot.isBlocking, false);
+        t.checkExpect(kruskal.status(), "Generating maze: 5/5");
+        // done now
+        t.checkExpect(kruskal.isComplete(), true);
+        // check that proper walls still up
+        t.checkExpect(maze1.cells.get(0).get(0).right.isBlocking, true);
+        t.checkExpect(maze1.cells.get(1).get(1).right.isBlocking, true);
+        // check for correct next animator
+        t.checkExpect(kruskal.nextAnimator(), new IdleAnimator(maze1));
+        
+        // make sure they're all seen as in the same group
+        Posn p1 = new Posn(0, 0);
+        for (ArrayList<Cell> col : maze1.cells) {
+            for (Cell cell : col) {
+                t.checkExpect(kruskal.uFind.sameGroup(p1,
+                        new Posn(cell.x, cell.y)), true);
+            }
+        }
+        
+    }
 
     /***************************************
      * Tests for InstantAnimator
