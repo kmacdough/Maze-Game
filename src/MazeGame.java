@@ -700,7 +700,7 @@ class DFSAnimator extends AutoSolveAnimator {
     // next animator to use when done
     MazeAnimator nextAnimator() {
         return new MsgAnimator(this.maze,
-                "Comleted Depth First Search.   Moves: " + this.moves);
+                "Completed Depth First Search.   Moves: " + this.moves);
     }
 
     // EFFECT: add given cell to the worklist
@@ -1973,14 +1973,171 @@ class ExamplesMaze {
      * Tests for AutoSolveAnimator (DFS and BFS)
      ***************************************/
     
+    // NOTE: The actual solving algorithm is really hard to test other than
+    // checking that it works in practice
+    
     DFSAnimator dfs;
     BFSAnimator bfs;
+    
+    // initialize auto-solving animators
+    void initAutoSolve() {
+        // set up and create maze (see Kruskal tests below)
+        // prepare maze1
+        initKruskal();
+        // create maze1
+        new InstantAnimator(maze1, kruskal).onTick();
+        // CONTEXT: maze1 and maze2 should now be set up and solveable
+
+        dfs = new DFSAnimator(maze1);
+        bfs = new BFSAnimator(maze1);
+    }
+    
+    // test isComplete method for DFSAnimator
+    void testIsCompleteDFS(Tester t) {
+        initAutoSolve();
+
+        t.checkExpect(dfs.isComplete(), false);
+        dfs.onTick();
+        t.checkExpect(dfs.isComplete(), false);
+        dfs.onTick();
+        t.checkExpect(dfs.isComplete(), false);
+        dfs.onTick();
+        t.checkExpect(dfs.isComplete(), false);
+        dfs.onTick();
+        t.checkExpect(dfs.isComplete(), true);
+    }
+    
+    // test hasWork method for DFSAnimator
+    void testHasWorkDFS(Tester t) {
+        initAutoSolve();
+
+        t.checkExpect(dfs.hasWork(), true);
+        dfs.onTick();
+        t.checkExpect(dfs.hasWork(), true);
+        dfs.onTick();
+        t.checkExpect(dfs.hasWork(), true);
+        dfs.onTick();
+        t.checkExpect(dfs.hasWork(), true);
+        dfs.onTick();
+        t.checkExpect(dfs.hasWork(), true);
+        dfs.onTick();
+        t.checkExpect(dfs.hasWork(), true);
+        // almost never ends up actually hitting false here
+    }
+    
+    // test status method for DFSAnimator
+    void testStatusDFS(Tester t) {
+        initAutoSolve();
+
+        t.checkExpect(dfs.status(), "Depth First Searching.   Moves: 0");
+        dfs.onTick();
+        t.checkExpect(dfs.status(), "Depth First Searching.   Moves: 1");
+        dfs.onTick();
+        t.checkExpect(dfs.status(), "Depth First Searching.   Moves: 2");
+        dfs.onTick();
+        t.checkExpect(dfs.status(), "Depth First Searching.   Moves: 3");
+        dfs.onTick();
+        t.checkExpect(dfs.status(), "Depth First Searching.   Moves: 3");
+    }
+    
+    // test nextAnimator method for BFSAnimator
+    void testNextAnimatorDFS(Tester t) {
+        initAutoSolve();
+
+        dfs.onTick();
+        dfs.onTick();
+        dfs.onTick();
+        dfs.onTick();
+        dfs.onTick();
+        dfs.onTick();
+        t.checkExpect(dfs.nextAnimator(),
+                new MsgAnimator(maze1,
+                        "Completed Depth First Search.   Moves: 3"));
+    }
+    
+    
+    
+    
+    // test isComplete method for BFSAnimator
+    void testIsCompleteBFS(Tester t) {
+        initAutoSolve();
+
+        t.checkExpect(bfs.isComplete(), false);
+        bfs.onTick();
+        t.checkExpect(bfs.isComplete(), false);
+        bfs.onTick();
+        t.checkExpect(bfs.isComplete(), false);
+        bfs.onTick();
+        t.checkExpect(bfs.isComplete(), false);
+        bfs.onTick();
+        t.checkExpect(bfs.isComplete(), false);
+        bfs.onTick();
+        t.checkExpect(bfs.isComplete(), false);
+        bfs.onTick();
+        t.checkExpect(bfs.isComplete(), true);
+    }
+    
+    // test hasWork method for BFSAnimator
+    void testHasWorkBFS(Tester t) {
+        initAutoSolve();
+
+        t.checkExpect(bfs.hasWork(), true);
+        bfs.onTick();
+        t.checkExpect(bfs.hasWork(), true);
+        bfs.onTick();
+        t.checkExpect(bfs.hasWork(), true);
+        bfs.onTick();
+        t.checkExpect(bfs.hasWork(), true);
+        bfs.onTick();
+        t.checkExpect(bfs.hasWork(), true);
+        bfs.onTick();
+        t.checkExpect(bfs.hasWork(), true);
+        bfs.onTick();
+        t.checkExpect(bfs.hasWork(), false);
+    }
+    
+    // test status method for BFSAnimator
+    void testStatusBFS(Tester t) {
+        initAutoSolve();
+
+        t.checkExpect(bfs.status(), "Breadth First Searching.   Moves: 0");
+        bfs.onTick();
+        t.checkExpect(bfs.status(), "Breadth First Searching.   Moves: 1");
+        bfs.onTick();
+        t.checkExpect(bfs.status(), "Breadth First Searching.   Moves: 2");
+        bfs.onTick();
+        t.checkExpect(bfs.status(), "Breadth First Searching.   Moves: 3");
+        bfs.onTick();
+        t.checkExpect(bfs.status(), "Breadth First Searching.   Moves: 4");
+        bfs.onTick();
+        t.checkExpect(bfs.status(), "Breadth First Searching.   Moves: 5");
+        bfs.onTick();
+        t.checkExpect(bfs.status(), "Breadth First Searching.   Moves: 5");
+    }
+    
+    // test nextAnimator method for BFSAnimator
+    void testNextAnimatorBFS(Tester t) {
+        initAutoSolve();
+
+        bfs.onTick();
+        bfs.onTick();
+        bfs.onTick();
+        bfs.onTick();
+        bfs.onTick();
+        bfs.onTick();
+        t.checkExpect(bfs.nextAnimator(),
+                new MsgAnimator(maze1,
+                        "Completed Breadth First Search.   Moves: 5"));
+    }
+    
 
     /***************************************
      * Tests for PlayAnimator
      ***************************************/
     
     PlayAnimator play;
+    // This animator is very difficult to test automatically, and best tested
+    // manually by playing
 
     /***************************************
      * Tests for IdleAnimator
@@ -2043,47 +2200,48 @@ class ExamplesMaze {
         /*
          * Weight assignments
          * +---+---+---+
-         * |   4   5   |
-         * +-1-+-3-+-6-+
-         * |   2   7   |
+         * |   1   6   |
+         * +-4-+-2-+-7-+
+         * |   3   5   |
          * +---+---+---+
          */
-        maze1.cells.get(0).get(0).right.weight = 4;
-        maze1.cells.get(1).get(0).right.weight = 5;
-        maze1.cells.get(0).get(1).right.weight = 2;
-        maze1.cells.get(1).get(1).right.weight = 7;
-        maze1.cells.get(0).get(0).bot.weight = 1;
-        maze1.cells.get(1).get(0).bot.weight = 3;
-        maze1.cells.get(2).get(0).bot.weight = 6;
+        
+        maze1.cells.get(0).get(0).right.weight = 1;
+        maze1.cells.get(1).get(0).right.weight = 6;
+        maze1.cells.get(0).get(1).right.weight = 3;
+        maze1.cells.get(1).get(1).right.weight = 5;
+        maze1.cells.get(0).get(0).bot.weight = 4;
+        maze1.cells.get(1).get(0).bot.weight = 2;
+        maze1.cells.get(2).get(0).bot.weight = 7;
         Collections.sort(maze1.edges, new EdgeWeightComp());
         kruskal = new KruskalAnimator(maze1);
     }
     
     // test Kruskal algorithm on the maze (onTick, status, isComplete and
-    // nextAnimator teted)
+    // nextAnimator tested)
     void testKruskalAnimator(Tester t) {
         initKruskal();
         
         kruskal.onTick();
-        t.checkExpect(maze1.cells.get(0).get(0).bot.isBlocking, false);
+        t.checkExpect(maze1.cells.get(0).get(0).right.isBlocking, false);
         t.checkExpect(kruskal.status(), "Generating maze: 1/5");
         kruskal.onTick();
-        t.checkExpect(maze1.cells.get(0).get(1).right.isBlocking, false);
+        t.checkExpect(maze1.cells.get(1).get(0).bot.isBlocking, false);
         t.checkExpect(kruskal.status(), "Generating maze: 2/5");
         kruskal.onTick();
-        t.checkExpect(maze1.cells.get(1).get(0).bot.isBlocking, false);
+        t.checkExpect(maze1.cells.get(0).get(1).right.isBlocking, false);
         t.checkExpect(kruskal.status(), "Generating maze: 3/5");
         kruskal.onTick();
-        t.checkExpect(maze1.cells.get(1).get(0).right.isBlocking, false);
+        t.checkExpect(maze1.cells.get(1).get(1).right.isBlocking, false);
         t.checkExpect(kruskal.status(), "Generating maze: 4/5");
         kruskal.onTick();
-        t.checkExpect(maze1.cells.get(2).get(0).bot.isBlocking, false);
+        t.checkExpect(maze1.cells.get(1).get(0).right.isBlocking, false);
         t.checkExpect(kruskal.status(), "Generating maze: 5/5");
         // done now
         t.checkExpect(kruskal.isComplete(), true);
         // check that proper walls still up
-        t.checkExpect(maze1.cells.get(0).get(0).right.isBlocking, true);
-        t.checkExpect(maze1.cells.get(1).get(1).right.isBlocking, true);
+        t.checkExpect(maze1.cells.get(0).get(0).bot.isBlocking, true);
+        t.checkExpect(maze1.cells.get(2).get(0).bot.isBlocking, true);
         // check for correct next animator
         t.checkExpect(kruskal.nextAnimator(), new IdleAnimator(maze1));
         
