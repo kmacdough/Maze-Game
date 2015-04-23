@@ -1832,8 +1832,8 @@ class ExamplesMaze {
     void testAssignRandomWeights(Tester t) {
         initMaze(3, 3);
         maze1.assignRandomWeights();
-        for(ArrayList<Cell> col : maze1.cells) {
-            for(Cell cell : col) {
+        for (ArrayList<Cell> col : maze1.cells) {
+            for (Cell cell : col) {
                 checkRandomWeight(cell.top, t);
                 checkRandomWeight(cell.bot, t);
                 checkRandomWeight(cell.left, t);
@@ -1911,6 +1911,50 @@ class ExamplesMaze {
     /***************************************
      * Tests for UnionFindPosn
      ***************************************/
+    
+    UnionFindPosn uFind;
+    
+    // initialize UnionFindPosn
+    void initUFind() {
+        uFind = new UnionFindPosn(3, 3);
+    }
+    
+    // test samePosn method on UnionFindPosn
+    void testSamePosn(Tester t) {
+        initUFind();
+
+        t.checkExpect(uFind.samePosn(new Posn(0, 0), new Posn(0, 0)), true);
+        t.checkExpect(uFind.samePosn(new Posn(12, 0), new Posn(0, 1)), false);
+        t.checkExpect(uFind.samePosn(new Posn(3, 4), new Posn(3, 4)), true);
+    }
+    
+    // test the sameGroup, getGroup and connect methods on UnionFindPosn since
+    //   all interconnected
+    void testUFind(Tester t) {
+        initUFind();
+        
+        for (int x = 0; x < 3; x += 1) {
+            for (int y = 0; y < 3; y += 1) {
+                t.checkExpect(uFind.getGroup(new Posn(x, y)), new Posn(x, y));
+            }
+        }
+
+        t.checkExpect(uFind.sameGroup(new Posn(0, 0), new Posn(1, 0)), false);
+        t.checkExpect(uFind.sameGroup(new Posn(0, 1), new Posn(1, 1)), false);
+        
+        uFind.connect(new Posn(0, 0), new Posn(1, 0));
+        
+        t.checkExpect(uFind.getGroup(new Posn(0, 0)),
+                uFind.getGroup(new Posn(1, 0)));
+        t.checkExpect(uFind.sameGroup(new Posn(0, 0), new Posn(1, 0)), true);
+
+        uFind.connect(new Posn(0, 1), new Posn(0, 0));
+        uFind.connect(new Posn(1, 1), new Posn(1, 0));
+        
+        t.checkExpect(uFind.getGroup(new Posn(0, 1)),
+                uFind.getGroup(new Posn(1, 1)));
+        t.checkExpect(uFind.sameGroup(new Posn(0, 1), new Posn(1, 1)), true);
+    }
 
     /***************************************
      * Tests for AutoSolveAnimator (DFS and BFS)
