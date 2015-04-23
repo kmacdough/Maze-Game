@@ -708,7 +708,7 @@ class DFSAnimator extends AutoSolveAnimator {
         this.worklist.push(cell);
     }
 
-    // get next cell to work on
+    // EFFECT: remove and return next item from worklist to work on
     Cell getWork() {
         return this.worklist.pop();
     }
@@ -750,7 +750,7 @@ class BFSAnimator extends AutoSolveAnimator {
         this.worklist.enqueue(cell);
     }
 
-    // get next cell to work on
+    // EFFECT: remove and return next item from worklist to work on
     Cell getWork() {
         return this.worklist.dequeue();
     }
@@ -1992,7 +1992,7 @@ class ExamplesMaze {
         bfs = new BFSAnimator(maze1);
     }
     
-    // test isComplete method for DFSAnimator
+    // test isComplete method on DFSAnimator
     void testIsCompleteDFS(Tester t) {
         initAutoSolve();
 
@@ -2007,7 +2007,7 @@ class ExamplesMaze {
         t.checkExpect(dfs.isComplete(), true);
     }
     
-    // test hasWork method for DFSAnimator
+    // test hasWork method on DFSAnimator
     void testHasWorkDFS(Tester t) {
         initAutoSolve();
 
@@ -2025,7 +2025,7 @@ class ExamplesMaze {
         // almost never ends up actually hitting false here
     }
     
-    // test status method for DFSAnimator
+    // test status method on DFSAnimator
     void testStatusDFS(Tester t) {
         initAutoSolve();
 
@@ -2040,7 +2040,7 @@ class ExamplesMaze {
         t.checkExpect(dfs.status(), "Depth First Searching.   Moves: 3");
     }
     
-    // test nextAnimator method for BFSAnimator
+    // test nextAnimator method on BFSAnimator
     void testNextAnimatorDFS(Tester t) {
         initAutoSolve();
 
@@ -2055,10 +2055,42 @@ class ExamplesMaze {
                         "Completed Depth First Search.   Moves: 3"));
     }
     
+    // test addWork method on DFSAnimator
+    void testAddWorkDFS(Tester t) {
+        Cell c1 = new Cell(0, 1);
+        
+        initAutoSolve();
+        dfs.addWork(c1);
+        t.checkExpect(dfs.worklist.pop(), c1);
+        
+        initAutoSolve();
+        dfs.onTick();
+        dfs.onTick();
+        dfs.onTick();
+        dfs.addWork(c1);
+        t.checkExpect(dfs.worklist.pop(), c1);
+    }
+    
+    // test getWork method on DFSAnimator
+    void testGetWorkDFS(Tester t) {
+        initAutoSolve();
+        t.checkExpect(dfs.getWork(), maze1.cells.get(0).get(0));
+
+        initAutoSolve();
+        dfs.onTick();
+        t.checkExpect(dfs.getWork(), maze1.cells.get(1).get(0));
+
+        initAutoSolve();
+        dfs.onTick();
+        dfs.onTick();
+        dfs.onTick();
+        t.checkExpect(dfs.getWork(), maze1.cells.get(2).get(1));
+    }
     
     
     
-    // test isComplete method for BFSAnimator
+    
+    // test isComplete method on BFSAnimator
     void testIsCompleteBFS(Tester t) {
         initAutoSolve();
 
@@ -2077,7 +2109,7 @@ class ExamplesMaze {
         t.checkExpect(bfs.isComplete(), true);
     }
     
-    // test hasWork method for BFSAnimator
+    // test hasWork method on BFSAnimator
     void testHasWorkBFS(Tester t) {
         initAutoSolve();
 
@@ -2096,7 +2128,7 @@ class ExamplesMaze {
         t.checkExpect(bfs.hasWork(), false);
     }
     
-    // test status method for BFSAnimator
+    // test status method on BFSAnimator
     void testStatusBFS(Tester t) {
         initAutoSolve();
 
@@ -2115,7 +2147,7 @@ class ExamplesMaze {
         t.checkExpect(bfs.status(), "Breadth First Searching.   Moves: 5");
     }
     
-    // test nextAnimator method for BFSAnimator
+    // test nextAnimator method on BFSAnimator
     void testNextAnimatorBFS(Tester t) {
         initAutoSolve();
 
@@ -2128,6 +2160,50 @@ class ExamplesMaze {
         t.checkExpect(bfs.nextAnimator(),
                 new MsgAnimator(maze1,
                         "Completed Breadth First Search.   Moves: 5"));
+    }
+    
+    // test addWork method on BFSAnimator
+    void testAddWorkBFS(Tester t) {
+        Cell c1 = new Cell(0, 1);
+        
+        initAutoSolve();
+        bfs.addWork(c1);
+        // remove the 1 element in front of queue
+        bfs.worklist.dequeue();
+        t.checkExpect(bfs.worklist.dequeue(), c1);
+        
+        initAutoSolve();
+        bfs.onTick();
+        bfs.onTick();
+        bfs.addWork(c1);
+        // remove the 2 elements in front of queue
+        bfs.worklist.dequeue();
+        bfs.worklist.dequeue();
+        t.checkExpect(bfs.worklist.dequeue(), c1);
+    }
+    
+    // test getWork method on BFSAnimator
+    void testGetWorkBFS(Tester t) {
+        initAutoSolve();
+        t.checkExpect(bfs.getWork(), maze1.cells.get(0).get(0));
+
+        initAutoSolve();
+        bfs.onTick();
+        t.checkExpect(bfs.getWork(), maze1.cells.get(1).get(0));
+
+        initAutoSolve();
+        bfs.onTick();
+        bfs.onTick();
+        bfs.onTick();
+        t.checkExpect(bfs.getWork(), maze1.cells.get(1).get(1));
+
+        initAutoSolve();
+        bfs.onTick();
+        bfs.onTick();
+        bfs.onTick();
+        bfs.onTick();
+        bfs.onTick();
+        t.checkExpect(bfs.getWork(), maze1.cells.get(2).get(1));
     }
     
 
