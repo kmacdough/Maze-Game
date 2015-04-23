@@ -1578,13 +1578,13 @@ class ExamplesMaze {
         t.checkExpect(lrEdge21.draw(20),
                 new RectangleImage(new Posn(40, 30), 3, 20, Edge.COLOR));
         t.checkExpect(tbEdge00.draw(10),
-                new RectangleImage(new Posn(5, 0), 2, 10, Edge.COLOR));
+                new RectangleImage(new Posn(5, 0), 10, 2, Edge.COLOR));
         t.checkExpect(tbEdge00.draw(0),
-                new RectangleImage(new Posn(0, 0), 1, 0, Edge.COLOR));
+                new RectangleImage(new Posn(0, 0), 0, 1, Edge.COLOR));
         t.checkExpect(tbEdge10.draw(20),
-                new RectangleImage(new Posn(30, 0), 3, 20, Edge.COLOR));
+                new RectangleImage(new Posn(30, 0), 20, 3, Edge.COLOR));
         t.checkExpect(tbEdge21.draw(20),
-                new RectangleImage(new Posn(50, 20), 3, 20, Edge.COLOR));
+                new RectangleImage(new Posn(50, 20), 20, 3, Edge.COLOR));
         
         lrEdge00.isBlocking = false;
         lrEdge00.isBlocking = false;
