@@ -1365,14 +1365,207 @@ class ExamplesMaze {
     
     
     /***************************************
-     * Tests for Cell
+     * Tests for Cell and Edge
      ***************************************/
+    Cell cell00;
+    Cell cell01;
+    Cell cell02;
+    Cell cell10;
+    Cell cell11;
+    Cell cell12;
+    Cell cell20;
+    Cell cell21;
+    Cell cell22;
     
+    Edge vertEdge00;
+    Edge vertEdge01;
+    Edge vertEdge02;
+    Edge vertEdge10;
+    Edge vertEdge11;
+    Edge vertEdge12;
+    Edge vertEdge20;
+    Edge vertEdge21;
+    Edge vertEdge22;
+    Edge vertEdge30;
+    Edge vertEdge31;
+    Edge vertEdge32;
     
+    Edge horizEdge00;
+    Edge horizEdge01;
+    Edge horizEdge02;
+    Edge horizEdge03;
+    Edge horizEdge10;
+    Edge horizEdge11;
+    Edge horizEdge12;
+    Edge horizEdge13;
+    Edge horizEdge20;
+    Edge horizEdge21;
+    Edge horizEdge22;
+    Edge horizEdge23;
+    
+    // Initialize cells
+    void initCells() {
+        cell00 = new Cell(0, 0);
+        cell01 = new Cell(0, 1);
+        cell02 = new Cell(0, 2);
+        cell10 = new Cell(1, 0);
+        cell11 = new Cell(1, 1);
+        cell12 = new Cell(1, 2);
+        cell20 = new Cell(2, 0);
+        cell21 = new Cell(2, 1);
+        cell22 = new Cell(2, 2);
+    }
+    
+    // Initialize edges, connected to cells
+    void initEdges() {
+        vertEdge00 = new LREdge(cell00, cell00, true, 0);
+        vertEdge01 = new LREdge(cell01, cell01, true, 0);
+        vertEdge02 = new LREdge(cell02, cell02, true, 0);
+        vertEdge10 = new LREdge(cell00, cell10, true, 0);
+        vertEdge11 = new LREdge(cell01, cell11, true, 0);
+        vertEdge12 = new LREdge(cell02, cell12, true, 0);
+        vertEdge20 = new LREdge(cell10, cell20, true, 0);
+        vertEdge21 = new LREdge(cell11, cell21, true, 0);
+        vertEdge22 = new LREdge(cell12, cell22, true, 0);
+        vertEdge30 = new LREdge(cell20, cell20, true, 0);
+        vertEdge31 = new LREdge(cell21, cell21, true, 0);
+        vertEdge32 = new LREdge(cell22, cell22, true, 0);
+        
+        horizEdge00 = new TBEdge(cell00, cell00, true, 0);
+        horizEdge01 = new TBEdge(cell00, cell01, true, 0);
+        horizEdge02 = new TBEdge(cell01, cell02, true, 0);
+        horizEdge03 = new TBEdge(cell02, cell02, true, 0);
+        horizEdge10 = new TBEdge(cell10, cell10, true, 0);
+        horizEdge11 = new TBEdge(cell10, cell11, true, 0);
+        horizEdge12 = new TBEdge(cell11, cell12, true, 0);
+        horizEdge13 = new TBEdge(cell12, cell12, true, 0);
+        horizEdge20 = new TBEdge(cell20, cell20, true, 0);
+        horizEdge21 = new TBEdge(cell20, cell21, true, 0);
+        horizEdge22 = new TBEdge(cell21, cell22, true, 0);
+        horizEdge23 = new TBEdge(cell22, cell22, true, 0);
+    }
+    
+    // Connect cells to edges
+    void connectCells() {
+        cell00.left = vertEdge00;
+        cell01.left = vertEdge01;
+        cell02.left = vertEdge02;
+        cell10.left = vertEdge10;
+        cell11.left = vertEdge11;
+        cell12.left = vertEdge12;
+        cell20.left = vertEdge20;
+        cell21.left = vertEdge21;
+        cell22.left = vertEdge22;
 
-    /***************************************
-     * Tests for Edge
-     ***************************************/
+        cell00.right = vertEdge10;
+        cell01.right = vertEdge11;
+        cell02.right = vertEdge12;
+        cell10.right = vertEdge20;
+        cell11.right = vertEdge21;
+        cell12.right = vertEdge22;
+        cell20.right = vertEdge30;
+        cell21.right = vertEdge31;
+        cell22.right = vertEdge32;
+        
+        cell00.top = horizEdge00;
+        cell01.top = horizEdge01;
+        cell02.top = horizEdge02;
+        cell10.top = horizEdge10;
+        cell11.top = horizEdge11;
+        cell12.top = horizEdge12;
+        cell20.top = horizEdge20;
+        cell21.top = horizEdge21;
+        cell22.top = horizEdge22;
+        
+        cell00.bot = horizEdge01;
+        cell01.bot = horizEdge02;
+        cell02.bot = horizEdge03;
+        cell10.bot = horizEdge11;
+        cell11.bot = horizEdge12;
+        cell12.bot = horizEdge13;
+        cell20.bot = horizEdge21;
+        cell21.bot = horizEdge22;
+        cell22.bot = horizEdge23;
+    }
+    
+    // Change whether certain cells are traversed or onPath
+    void initCellStatus() {
+        cell00.traversed = true;
+        cell01.traversed = true;
+        cell02.onPath = true;
+        cell20.onPath = true;
+        cell21.traversed = true;
+        cell21.onPath = true;
+    }
+    
+    // Tests for the getColor method on Cell
+    void testGetColorCell(Tester t) {
+        initCells();
+        
+        Color untraversed = new Color(203, 188, 227);
+        Color traversed = new Color(150, 150, 220);
+        Color onPath = new Color(250, 70, 70);
+        
+        t.checkExpect(cell00.getColor(), untraversed);
+        t.checkExpect(cell01.getColor(), untraversed);
+        t.checkExpect(cell02.getColor(), untraversed);
+        t.checkExpect(cell10.getColor(), untraversed);
+        t.checkExpect(cell11.getColor(), untraversed);
+        t.checkExpect(cell12.getColor(), untraversed);
+        t.checkExpect(cell20.getColor(), untraversed);
+        t.checkExpect(cell21.getColor(), untraversed);
+        t.checkExpect(cell22.getColor(), untraversed);
+
+        initCellStatus();
+
+        t.checkExpect(cell00.getColor(), traversed);
+        t.checkExpect(cell01.getColor(), traversed);
+        t.checkExpect(cell02.getColor(), onPath);
+        t.checkExpect(cell10.getColor(), untraversed);
+        t.checkExpect(cell11.getColor(), untraversed);
+        t.checkExpect(cell12.getColor(), untraversed);
+        t.checkExpect(cell20.getColor(), onPath);
+        t.checkExpect(cell21.getColor(), onPath);
+        t.checkExpect(cell22.getColor(), untraversed);
+        
+    }
+    
+    // Tests for the draw method on Cell
+    void testDrawCell(Tester t) {
+        initCells();
+        initEdges();
+        connectCells();
+
+        ArrayList<Cell> cells = new ArrayList<Cell>();
+        cells.add(cell00);
+        cells.add(cell01);
+        cells.add(cell02);
+        cells.add(cell10);
+        cells.add(cell11);
+        cells.add(cell12);
+        cells.add(cell20);
+        cells.add(cell21);
+        cells.add(cell22);
+        
+        for (Cell curCell: cells) {
+            Posn center = new Posn(curCell.x * 10 + 5, curCell.y * 10 + 5);
+
+            WorldImage cellImage = 
+                    new RectangleImage(center, 10, 10, curCell.getColor());
+
+            WorldImage leftEdgeImage = curCell.left.draw(10);
+            WorldImage topEdgeImage = curCell.top.draw(10);
+            WorldImage rightEdgeImage = curCell.right.draw(10);
+            WorldImage botEdgeImage = curCell.bot.draw(10);
+            
+            WorldImage finalImage = cellImage.overlayImages(
+                    leftEdgeImage, topEdgeImage, rightEdgeImage, botEdgeImage);
+            
+            t.checkExpect(curCell.draw(10), finalImage);
+        }
+    }
+    
+    
     
     /***************************************
      * Tests for Maze
