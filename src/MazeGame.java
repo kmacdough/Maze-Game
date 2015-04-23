@@ -177,11 +177,6 @@ class Cell {
             return new Color(203, 188, 227);
         }
     }
-
-    // Returns the name of this cell as a string of its position
-    String getName() {
-        return Integer.toString(this.x).concat(Integer.toString(this.y));
-    }
 }
 
 // to represent a wall between two cells
@@ -1133,8 +1128,9 @@ class ExamplesMaze {
     }
     
     // stack push pop size isEmpty
-    
-    /**** Tests for Stack ****/
+    /***************************************
+     * Tests for Stack
+     ***************************************/
     
     Stack<Integer> stack;
     
@@ -1234,7 +1230,9 @@ class ExamplesMaze {
         t.checkExpect(stack.isEmpty(), true);
     }
 
-    /**** Tests for Queue ****/
+    /***************************************
+     * Tests for Queue
+     ***************************************/
     
     Queue<Integer> queue;
     
@@ -1364,4 +1362,48 @@ class ExamplesMaze {
         t.checkExpect(queue.dequeue(), 4);
         t.checkExpect(queue.dequeue(), 5);
     }
+    
+    
+    /***************************************
+     * Tests for Cell
+     ***************************************/
+    
+    
+
+    /***************************************
+     * Tests for Edge
+     ***************************************/
+    
+    /***************************************
+     * Tests for Maze
+     ***************************************/
+    
+    /***************************************
+     * Tests for AutoSolveAnimator (DFS and BFS)
+     ***************************************/
+
+    /***************************************
+     * Tests for PlayAnimator
+     ***************************************/
+    
+    /***************************************
+     * Tests for IdleAnimator
+     ***************************************/
+    
+    /***************************************
+     * Tests for MsgAnimator
+     ***************************************/
+    
+    /***************************************
+     * Tests for KruskalAnimator
+     ***************************************/
+    
+    /***************************************
+     * Tests for InstantAnimator
+     ***************************************/
+    
+    /***************************************
+     * Tests for MazeWorld
+     ***************************************/
+    
 }
