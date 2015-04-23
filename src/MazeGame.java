@@ -1121,7 +1121,7 @@ class MazeWorld extends World {
 class ExamplesMaze {
 
     // test to start off big bang
-    void testBigBang(Tester t) {
+    void donttestBigBang(Tester t) {
         MazeWorld initWorld = new MazeWorld();
 
         initWorld.bigBang(initWorld.getPixelWidth(),
@@ -1570,6 +1570,7 @@ class ExamplesMaze {
     // Tests for the draw method on Edge
     // Note: also tests getImage in testing draw
     void testDrawEdge(Tester t) {
+        initCells();
         initEdges();
         t.checkExpect(lrEdge00.draw(10),
                 new RectangleImage(new Posn(0, 5), 2, 10, Edge.COLOR));
@@ -1617,6 +1618,298 @@ class ExamplesMaze {
 
     /***************************************
      * Tests for Maze
+     ***************************************/
+    
+    // NOTE: Drawing methods not tested for impracticality reasons
+    
+    Maze maze1;
+    Maze maze2;
+    
+    // initialize both mazes with given width and height
+    void initMaze(int width, int height) {
+        maze1 = new Maze(width, height);
+        maze2 = new Maze(width, height);
+    }
+    
+    // test the initializeBoard method on Maze
+    void testInitializeBoardMaze(Tester t) {
+        initMaze(1, 1);
+        
+        maze1.initializeBoard(3, 3);
+
+        maze2.width = 3;
+        maze2.height = 3;
+        maze2.constructCells(3, 3);
+        maze2.connectCells();
+        
+        t.checkExpect(maze1, maze2);
+        
+        initMaze(1, 1);
+        
+        maze1.initializeBoard(5, 6);
+
+        maze2.width = 5;
+        maze2.height = 6;
+        maze2.constructCells(5, 6);
+        maze2.connectCells();
+        
+        t.checkExpect(maze1, maze2);
+    }
+    
+    // test the constructCells method on Maze
+    void testConstructCellsMaze(Tester t) {
+        initMaze(1, 1);
+        
+        maze1.width = 2;
+        maze1.height = 1;
+        maze1.constructCells(2, 1);
+        
+        maze2.width = 2;
+        maze2.height = 1;
+        ArrayList<ArrayList<Cell>> cells2 = new ArrayList<ArrayList<Cell>>();
+        cells2.add(new ArrayList<Cell>());
+        cells2.add(new ArrayList<Cell>());
+        cells2.get(0).add(new Cell(0, 0));
+        cells2.get(1).add(new Cell(1, 0));
+        maze2.cells = cells2;
+        
+        t.checkExpect(maze1, maze2);
+
+        initMaze(1, 1);
+        
+        maze1.width = 3;
+        maze1.height = 3;
+        maze1.constructCells(3, 3);
+        
+        maze2.width = 3;
+        maze2.height = 3;
+        cells2 = new ArrayList<ArrayList<Cell>>();
+        cells2.add(new ArrayList<Cell>());
+        cells2.add(new ArrayList<Cell>());
+        cells2.add(new ArrayList<Cell>());
+        cells2.get(0).add(new Cell(0, 0));
+        cells2.get(0).add(new Cell(0, 1));
+        cells2.get(0).add(new Cell(0, 2));
+        cells2.get(1).add(new Cell(1, 0));
+        cells2.get(1).add(new Cell(1, 1));
+        cells2.get(1).add(new Cell(1, 2));
+        cells2.get(2).add(new Cell(2, 0));
+        cells2.get(2).add(new Cell(2, 1));
+        cells2.get(2).add(new Cell(2, 2));
+        maze2.cells = cells2;
+        
+        t.checkExpect(maze1, maze2);
+    }
+    
+    // test connectCells method on Maze
+    void testConnectCells(Tester t) {
+        initMaze(1, 1);
+
+        maze1.width = 3;
+        maze1.height = 3;
+        maze1.constructCells(3, 3);
+        maze1.connectCells();
+        
+        maze2.width = 3;
+        maze2.height = 3;
+        maze2.constructCells(3, 3);
+        maze2.edges = new ArrayList<Edge>();
+        maze2.connectCellsHorizontal();
+        maze2.connectCellsVertical();
+        
+        t.checkExpect(maze1, maze2);
+
+        initMaze(1, 1);
+
+        maze1.width = 5;
+        maze1.height = 6;
+        maze1.constructCells(5, 6);
+        maze1.connectCells();
+        
+        maze2.width = 5;
+        maze2.height = 6;
+        maze2.constructCells(5, 6);
+        maze2.edges = new ArrayList<Edge>();
+        maze2.connectCellsHorizontal();
+        maze2.connectCellsVertical();
+        
+        t.checkExpect(maze1, maze2);
+    }
+    
+    // test connectCellsVertical method on Maze
+    void testConnectCellsVertical(Tester t) {
+        initMaze(1, 1);
+        
+        maze1.width = 1;
+        maze1.height = 3;
+        maze1.constructCells(1, 3);
+        maze1.edges = new ArrayList<Edge>();
+        maze1.connectCellsVertical();
+        
+        Cell c00 = maze1.cells.get(0).get(0);
+        Cell c01 = maze1.cells.get(0).get(1);
+        Cell c02 = maze1.cells.get(0).get(2);
+        t.checkExpect(c00.top.cell1, c00);
+        t.checkExpect(c00.top.cell2, c00);
+        t.checkExpect(c00.bot.cell1, c00);
+        t.checkExpect(c00.bot.cell2, c01);
+
+        t.checkExpect(c01.top.cell1, c00);
+        t.checkExpect(c01.top.cell2, c01);
+        t.checkExpect(c01.bot.cell1, c01);
+        t.checkExpect(c01.bot.cell2, c02);
+
+        t.checkExpect(c02.top.cell1, c01);
+        t.checkExpect(c02.top.cell2, c02);
+        t.checkExpect(c02.bot.cell1, c02);
+        t.checkExpect(c02.bot.cell2, c02);
+        
+        // only connecting edges should have been added
+        t.checkExpect(maze1.edges.size(), 2);
+    }
+    
+    // test connectCellsHorizontal method on Maze
+    void testConnectCellsHorizontal(Tester t) {
+        initMaze(1, 1);
+        
+        maze1.width = 3;
+        maze1.height = 1;
+        maze1.constructCells(3, 1);
+        maze1.edges = new ArrayList<Edge>();
+        maze1.connectCellsHorizontal();
+        
+        Cell c00 = maze1.cells.get(0).get(0);
+        Cell c10 = maze1.cells.get(1).get(0);
+        Cell c20 = maze1.cells.get(2).get(0);
+        t.checkExpect(c00.left.cell1, c00);
+        t.checkExpect(c00.left.cell2, c00);
+        t.checkExpect(c00.right.cell1, c00);
+        t.checkExpect(c00.right.cell2, c10);
+
+        t.checkExpect(c10.left.cell1, c00);
+        t.checkExpect(c10.left.cell2, c10);
+        t.checkExpect(c10.right.cell1, c10);
+        t.checkExpect(c10.right.cell2, c20);
+
+        t.checkExpect(c20.left.cell1, c10);
+        t.checkExpect(c20.left.cell2, c20);
+        t.checkExpect(c20.right.cell1, c20);
+        t.checkExpect(c20.right.cell2, c20);
+        
+        // only connecting edges should have been added
+        t.checkExpect(maze1.edges.size(), 2);
+    }
+    
+    // test wallsUp method on Maze
+    void testWallsUp(Tester t) {
+        initMaze(3, 3);
+        
+        // shouldn't do anything on new maze
+        maze1.wallsUp();
+        t.checkExpect(maze1, maze2);
+        
+        initMaze(3, 3);
+        
+        Edge e1 = maze1.cells.get(0).get(0).right;
+        Edge e2 = maze1.cells.get(1).get(0).bot;
+        Edge e3 = maze1.cells.get(1).get(2).left;
+        Edge e4 = maze1.cells.get(2).get(2).top;
+        
+        e1.isBlocking = false;
+        e2.isBlocking = false;
+        e3.isBlocking = false;
+        e4.isBlocking = false;
+        
+        maze1.wallsUp();
+
+        t.checkExpect(e1.isBlocking, true);
+        t.checkExpect(e2.isBlocking, true);
+        t.checkExpect(e3.isBlocking, true);
+        t.checkExpect(e4.isBlocking, true);
+    }
+    
+    // test that the assignRandomWeights method on Maze is reasonable
+    void testAssignRandomWeights(Tester t) {
+        initMaze(3, 3);
+        maze1.assignRandomWeights();
+        for(ArrayList<Cell> col : maze1.cells) {
+            for(Cell cell : col) {
+                checkRandomWeight(cell.top, t);
+                checkRandomWeight(cell.bot, t);
+                checkRandomWeight(cell.left, t);
+                checkRandomWeight(cell.right, t);
+            }
+        }
+    }
+    
+    // helper method to check if a non-border edge has reasonable ranom weight
+    void checkRandomWeight(Edge edge, Tester t) {
+        if (edge instanceof BorderEdge) {
+            // PASS
+        }
+        else {
+            t.checkExpect(edge.weight >= 0, true);
+            t.checkExpect(edge.weight < 1, true);
+        }
+    }
+    
+    // test getFinalCell method on Maze
+    void testGetFinalCell(Tester t) {
+        initMaze(1, 1);
+        t.checkExpect(maze1.getFinalCell().x, 0);
+        t.checkExpect(maze1.getFinalCell().y, 0);
+
+        initMaze(5, 7);
+        t.checkExpect(maze1.getFinalCell().x, 4);
+        t.checkExpect(maze1.getFinalCell().y, 6);
+
+        initMaze(12, 13);
+        t.checkExpect(maze1.getFinalCell().x, 11);
+        t.checkExpect(maze1.getFinalCell().y, 12);
+    }
+    
+    // test getFirstCell method on Maze
+    void testGetFirstCell(Tester t) {
+        initMaze(1, 1);
+        t.checkExpect(maze1.getFirstCell().x, 0);
+        t.checkExpect(maze1.getFirstCell().y, 0);
+
+        initMaze(5, 7);
+        t.checkExpect(maze1.getFirstCell().x, 0);
+        t.checkExpect(maze1.getFirstCell().y, 0);
+
+        initMaze(12, 13);
+        t.checkExpect(maze1.getFirstCell().x, 0);
+        t.checkExpect(maze1.getFirstCell().y, 0);
+    }
+    
+    // test resetTraversals method on Maze
+    void testResetTraversals(Tester t) {
+        initMaze(3, 3);
+
+        Cell c1 = maze1.cells.get(0).get(0);
+        Cell c2 = maze1.cells.get(1).get(2);
+        Cell c3 = maze1.cells.get(1).get(1);
+        Cell c4 = maze1.cells.get(2).get(0);
+        
+        c1.onPath = true;
+        c1.traversed = true;
+        c2.onPath = true;
+        c3.traversed = true;
+        c4.traversed = true;
+        
+        maze1.resetTraversals();
+        
+        for (ArrayList<Cell> col : maze1.cells) {
+            for (Cell cell : col) {
+                t.checkExpect(cell.onPath, false);
+                t.checkExpect(cell.traversed, false);
+            }
+        }
+    }
+
+    /***************************************
+     * Tests for UnionFindPosn
      ***************************************/
 
     /***************************************
